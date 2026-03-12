@@ -32,8 +32,8 @@ func rebuild_graph() -> void:
 
 	var junctions: Array[JunctionPoint2D] = get_junctions()
 	for junction: JunctionPoint2D in junctions:
-		if junction.point_color == Color(1.0, 0.0, 0.0, 1.0) and junction.point_color != default_point_color:
-			junction.point_color = default_point_color
+		if junction.get_point_color() != default_point_color:
+			junction.set_point_color(default_point_color)
 		connections[junction] = []
 
 	for i: int in range(junctions.size()):
@@ -118,3 +118,4 @@ func get_neighbors(point: JunctionPoint2D) -> Array[JunctionPoint2D]:
 	if not connections.has(point):
 		return []
 	return connections[point]
+

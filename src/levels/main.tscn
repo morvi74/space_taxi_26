@@ -14,8 +14,6 @@
 [ext_resource type="PackedScene" uid="uid://ls3ssna6beko" path="res://src/objects/waiting_zone.tscn" id="12_xy8aq"]
 [ext_resource type="Script" uid="uid://ji21wjeqf75u" path="res://src/levels/level_manager.gd" id="13_76muk"]
 [ext_resource type="Script" uid="uid://we3g5e1jsacl" path="res://src/junctions/junction_graph_2d.gd" id="14_2q5fg"]
-[ext_resource type="PackedScene" uid="uid://1xae4kmotven" path="res://src/junctions/junction_point_2d.tscn" id="15_6ncgn"]
-[ext_resource type="Script" uid="uid://dmcy0m7ag4dvk" path="res://src/junctions/junction_point_2d.gd" id="16_eoc4i"]
 
 [sub_resource type="Resource" id="Resource_1u2ys"]
 script = ExtResource("5_wn2xd")
@@ -93,13 +91,5 @@ position = Vector2(331, 225)
 [node name="LevelManager" type="Node" parent="." unique_id=1017562754]
 script = ExtResource("13_76muk")
 
-[node name="JunctionGraph2D" type="Node2D" parent="." unique_id=2113097777]
+[node name="Node2D" type="Node2D" parent="." unique_id=1153698352]
 script = ExtResource("14_2q5fg")
-
-[node name="Junction_1" type="Node2D" parent="JunctionGraph2D" unique_id=1028930 instance=ExtResource("15_6ncgn")]
-position = Vector2(1173, 548)
-script = ExtResource("16_eoc4i")
-
-[node name="Junction_2" type="Node2D" parent="JunctionGraph2D" unique_id=71216220 instance=ExtResource("15_6ncgn")]
-position = Vector2(900, 634)
-script = ExtResource("16_eoc4i")

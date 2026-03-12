@@ -2,11 +2,15 @@
 class_name JunctionPoint2D
 extends Node2D
 
+# @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
+# @onready var _sprite: Sprite2D = $Sprite2D
+
+
 @export var point_color: Color = Color(1.0, 0.0, 0.0, 1.0):
 	set(value):
 		point_color = value
 		queue_redraw()
-		_notify_graph_changed()
+		_notify_graph_changed()	
 
 @export_range(2.0, 64.0, 1.0) var radius: float = 8.0:
 	set(value):

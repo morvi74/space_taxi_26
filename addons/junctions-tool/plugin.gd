@@ -91,7 +91,7 @@ func _find_point_at(graph: JunctionGraph2D, mouse_pos: Vector2) -> JunctionPoint
 	var global_mouse_pos = canvas_xform.affine_inverse() * mouse_pos
 
 	for point: JunctionPoint2D in graph.get_junctions():
-		if point.global_position.distance_to(global_mouse_pos) <= point.radius + 4.0:
+		if point.global_position.distance_to(global_mouse_pos) <= point.radius + 8.0:
 			return point
 	return null
 
@@ -99,18 +99,28 @@ func _create_point(graph: JunctionGraph2D, mouse_pos: Vector2) -> void:
 	var point: JunctionPoint2D = POINT_SCENE.instantiate() as JunctionPoint2D
 	point.name = _generate_name(graph)
 
-	# Convert mouse_pos from canvas coordinates to global world coordinates
-	# (same approach as _find_point_at to ensure consistent coordinate space conversion)
 	var editor_interface = get_editor_interface()
-	var base_control = editor_interface.get_base_control()
-	var viewport = base_control.get_viewport()
-	var canvas_xform = viewport.canvas_transform
-	var world_pos = canvas_xform.affine_inverse() * mouse_pos
-	point.position = graph.to_local(world_pos)
+	var scene_root = editor_interface.get_edited_scene_root()
+	
+	# Get the actual world mouse position from the viewport
+	var scene_viewport = scene_root.get_viewport()
+	var world_pos = scene_viewport.get_mouse_position()
+	
+	# # DEBUG
+	# print("=== DEBUG: _create_point Mk. IV ===")
+	# print("Raw editor window mouse_pos: ", mouse_pos)
+	# print("Actual world_pos from viewport: ", world_pos)
+	
+	# Convert world coordinates to local coordinates relative to the graph node
+	var local_pos = graph.to_local(world_pos)
+	# print("local_pos (relative to graph): ", local_pos)
+	# print("=== END DEBUG ===")
+	
+	point.position = local_pos
 
 	graph.add_child(point)
 	point.owner = editor_interface.get_edited_scene_root()
-	point.point_color = graph.default_point_color
+	point.set_point_color(graph.default_point_color)
 	graph.rebuild_graph()
 
 func _generate_name(graph: JunctionGraph2D) -> String:
@@ -119,7 +129,7 @@ func _generate_name(graph: JunctionGraph2D) -> String:
 		var candidate: String = "Junction_%d" % index
 		if graph.get_node_or_null(candidate) == null:
 			return candidate
-	push_error("Junction-Plugin: Konnte keinen freien Junction-Namen erezugen!")
+	push_error("Junction-Plugin: Konnte keinen freien Junction-Namen erzeugen!")
 	return "Junction-Error"
 
 func _toggle_exception(a: JunctionPoint2D, b: JunctionPoint2D) -> void:
