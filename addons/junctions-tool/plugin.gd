@@ -99,22 +99,14 @@ func _create_point(graph: JunctionGraph2D, mouse_pos: Vector2) -> void:
 	var point: JunctionPoint2D = POINT_SCENE.instantiate() as JunctionPoint2D
 	point.name = _generate_name(graph)
 
-	# Get the editor's 2D viewport and camera
+	# Convert mouse_pos from canvas coordinates to global world coordinates
+	# (same approach as _find_point_at to ensure consistent coordinate space conversion)
 	var editor_interface = get_editor_interface()
-	var viewport = editor_interface.get_editor_viewport_2d()
-	var camera = viewport.get_camera_2d()
-
-	if camera:
-		# If there's a camera, convert from screen to world coordinates
-		var world_pos = camera.get_screen_transform().affine_inverse() * mouse_pos
-		point.position = graph.to_local(world_pos)
-	else:
-		# Fallback: use canvas transform
-		var base_control = editor_interface.get_base_control()
-		var canvas_viewport = base_control.get_viewport()
-		var canvas_xform = canvas_viewport.canvas_transform
-		var world_pos = canvas_xform.affine_inverse() * mouse_pos
-		point.position = graph.to_local(world_pos)
+	var base_control = editor_interface.get_base_control()
+	var viewport = base_control.get_viewport()
+	var canvas_xform = viewport.canvas_transform
+	var world_pos = canvas_xform.affine_inverse() * mouse_pos
+	point.position = graph.to_local(world_pos)
 
 	graph.add_child(point)
 	point.owner = editor_interface.get_edited_scene_root()
