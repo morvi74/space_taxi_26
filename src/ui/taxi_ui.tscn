@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://dmq65yirkwqkv"]
+
+[ext_resource type="Script" uid="uid://dgj5pmay7uxhf" path="res://src/ui/taxi_ui.gd" id="1_14w6q"]
+
+[node name="TaxiUI" type="Control" unique_id=1958615251]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_14w6q")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=208705581]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TaxiHealthHBox" type="HBoxContainer" parent="VBoxContainer" unique_id=142099376]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer/TaxiHealthHBox" unique_id=1909823544]
+layout_mode = 2
+text = "Taxi Health: "
+
+[node name="ValueLabel" type="Label" parent="VBoxContainer/TaxiHealthHBox" unique_id=1813921988]
+layout_mode = 2
+
+[node name="GearHealthHBox" type="HBoxContainer" parent="VBoxContainer" unique_id=50898484]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer/GearHealthHBox" unique_id=377923839]
+layout_mode = 2
+text = "Gear Health: "
+
+[node name="ValueLabel" type="Label" parent="VBoxContainer/GearHealthHBox" unique_id=1471672121]
+layout_mode = 2

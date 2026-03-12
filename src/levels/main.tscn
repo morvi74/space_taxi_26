@@ -1,0 +1,105 @@
+[gd_scene format=3 uid="uid://bfygoixfbxykr"]
+
+[ext_resource type="PackedScene" uid="uid://dmq65yirkwqkv" path="res://src/ui/taxi_ui.tscn" id="1_1u2ys"]
+[ext_resource type="PackedScene" uid="uid://bq64v66ij6lpp" path="res://src/objects/building.tscn" id="1_i52iv"]
+[ext_resource type="Texture2D" uid="uid://bh17d7qv18x8o" path="res://icon.svg" id="1_wn2xd"]
+[ext_resource type="PackedScene" uid="uid://cwfvr1g86mvak" path="res://src/characters/cars/car.tscn" id="2_rn2v6"]
+[ext_resource type="Script" uid="uid://bhexx6mj1xv3q" path="res://addons/phantom_camera/scripts/phantom_camera/phantom_camera_2d.gd" id="4_w1vba"]
+[ext_resource type="Script" uid="uid://8umksf8e80fw" path="res://addons/phantom_camera/scripts/resources/tween_resource.gd" id="5_wn2xd"]
+[ext_resource type="Script" uid="uid://bd046eokvcnu2" path="res://addons/phantom_camera/scripts/phantom_camera_host/phantom_camera_host.gd" id="6_n4k3i"]
+[ext_resource type="PackedScene" uid="uid://xpedx4lee1fy" path="res://src/characters/player/taxi.tscn" id="7_wn2xd"]
+[ext_resource type="PackedScene" uid="uid://cqmo1n2gndxgy" path="res://src/objects/landing_pad.tscn" id="8_n4k3i"]
+[ext_resource type="PackedScene" uid="uid://bryj2vkmdobmq" path="res://src/characters/npcs/biker.tscn" id="10_gp1ok"]
+[ext_resource type="PackedScene" uid="uid://3s13vtemc41a" path="res://src/characters/npcs/character_01.tscn" id="11_fjmvy"]
+[ext_resource type="PackedScene" uid="uid://ls3ssna6beko" path="res://src/objects/waiting_zone.tscn" id="12_xy8aq"]
+[ext_resource type="Script" uid="uid://ji21wjeqf75u" path="res://src/levels/level_manager.gd" id="13_76muk"]
+[ext_resource type="Script" uid="uid://we3g5e1jsacl" path="res://src/junctions/junction_graph_2d.gd" id="14_2q5fg"]
+[ext_resource type="PackedScene" uid="uid://1xae4kmotven" path="res://src/junctions/junction_point_2d.tscn" id="15_6ncgn"]
+[ext_resource type="Script" uid="uid://dmcy0m7ag4dvk" path="res://src/junctions/junction_point_2d.gd" id="16_eoc4i"]
+
+[sub_resource type="Resource" id="Resource_1u2ys"]
+script = ExtResource("5_wn2xd")
+
+[node name="main" type="Node2D" unique_id=390309636]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1751361204]
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer" unique_id=1749924769]
+offset_right = 40.0
+offset_bottom = 40.0
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="TaxiUI" parent="CanvasLayer/MarginContainer" unique_id=1958615251 instance=ExtResource("1_1u2ys")]
+layout_mode = 2
+
+[node name="BG" type="Sprite2D" parent="." unique_id=1347578410]
+z_index = -10
+position = Vector2(1.000061, -18)
+scale = Vector2(5.15625, 3.0781248)
+texture = ExtResource("1_wn2xd")
+
+[node name="Building" parent="." unique_id=621370329 instance=ExtResource("1_i52iv")]
+position = Vector2(116, 344)
+
+[node name="Building2" parent="." unique_id=559984927 instance=ExtResource("1_i52iv")]
+position = Vector2(378, 261)
+
+[node name="Building3" parent="." unique_id=950999585 instance=ExtResource("1_i52iv")]
+position = Vector2(828, 343)
+
+[node name="Car" parent="." unique_id=428149262 instance=ExtResource("2_rn2v6")]
+position = Vector2(616, 175)
+_direction = Vector2(-1, 0)
+
+[node name="PhantomCamera2D" type="Node2D" parent="." unique_id=1730872812 node_paths=PackedStringArray("follow_target")]
+top_level = true
+position = Vector2(384, 175)
+script = ExtResource("4_w1vba")
+follow_mode = 2
+follow_target = NodePath("../Taxi")
+tween_resource = SubResource("Resource_1u2ys")
+metadata/_custom_type_script = "uid://bhexx6mj1xv3q"
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=980237368]
+physics_interpolation_mode = 1
+top_level = true
+position = Vector2(384, 175)
+
+[node name="PhantomCameraHost" type="Node" parent="Camera2D" unique_id=269426651]
+process_priority = 300
+process_physics_priority = 300
+script = ExtResource("6_n4k3i")
+interpolation_mode = 2
+metadata/_custom_type_script = "uid://bd046eokvcnu2"
+
+[node name="Taxi" parent="." unique_id=151031600 instance=ExtResource("7_wn2xd")]
+position = Vector2(384, 175)
+
+[node name="LandingPad" parent="." unique_id=1215425304 instance=ExtResource("8_n4k3i")]
+position = Vector2(394, 225)
+
+[node name="Biker" parent="." unique_id=1098498680 instance=ExtResource("10_gp1ok")]
+position = Vector2(318, 195)
+
+[node name="Character_01" parent="." unique_id=1577247864 instance=ExtResource("11_fjmvy")]
+position = Vector2(338, 221)
+
+[node name="WaitingZone" parent="." unique_id=1980633811 instance=ExtResource("12_xy8aq")]
+position = Vector2(331, 225)
+
+[node name="LevelManager" type="Node" parent="." unique_id=1017562754]
+script = ExtResource("13_76muk")
+
+[node name="JunctionGraph2D" type="Node2D" parent="." unique_id=2113097777]
+script = ExtResource("14_2q5fg")
+
+[node name="Junction_1" type="Node2D" parent="JunctionGraph2D" unique_id=1028930 instance=ExtResource("15_6ncgn")]
+position = Vector2(1173, 548)
+script = ExtResource("16_eoc4i")
+
+[node name="Junction_2" type="Node2D" parent="JunctionGraph2D" unique_id=71216220 instance=ExtResource("15_6ncgn")]
+position = Vector2(900, 634)
+script = ExtResource("16_eoc4i")

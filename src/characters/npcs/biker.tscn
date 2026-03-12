@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://bryj2vkmdobmq"]
+
+[ext_resource type="Texture2D" uid="uid://bfry8eg1dwqix" path="res://assets/characters/npcs/biker/Biker_idle_centered.png" id="1_v857g"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dnj02"]
+atlas = ExtResource("1_v857g")
+region = Rect2(0, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xwet3"]
+atlas = ExtResource("1_v857g")
+region = Rect2(48, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hh0ec"]
+atlas = ExtResource("1_v857g")
+region = Rect2(96, 0, 48, 48)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_waeo2"]
+atlas = ExtResource("1_v857g")
+region = Rect2(144, 0, 48, 48)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_g38rx"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dnj02")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xwet3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hh0ec")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_waeo2")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="Biker" type="Area2D" unique_id=1098498680]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1158442435]
+sprite_frames = SubResource("SpriteFrames_g38rx")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=862778596]

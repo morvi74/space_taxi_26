@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://1xae4kmotven"]
+
+[ext_resource type="Script" uid="uid://dmcy0m7ag4dvk" path="res://src/junctions/junction_point_2d.gd" id="1_s2dw0"]
+
+[node name="JunctionPoint2D" type="Node2D" unique_id=1028930]
+script = ExtResource("1_s2dw0")
