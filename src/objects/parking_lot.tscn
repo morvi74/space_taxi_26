@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://b3lq2en7dg1po"]
+
+[ext_resource type="Script" uid="uid://by2fpe8xkjd7a" path="res://src/objects/parking_lot.gd" id="1_0anca"]
+[ext_resource type="Texture2D" uid="uid://djm0in1a63cly" path="res://assets/landing_stuff/LandingPad.png" id="2_8c5qa"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xet2e"]
+size = Vector2(96, 8)
+
+[sub_resource type="LabelSettings" id="LabelSettings_xet2e"]
+font_size = 8
+font_color = Color(0, 0, 0, 1)
+
+[node name="ParkingLot" type="StaticBody2D" unique_id=1215425304 groups=["landing_pads"]]
+collision_layer = 64
+collision_mask = 0
+script = ExtResource("1_0anca")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=860101777]
+modulate = Color(0.3254902, 0.49803922, 1, 1)
+texture = ExtResource("2_8c5qa")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=510697553]
+shape = SubResource("RectangleShape2D_xet2e")
+
+[node name="IdLabel" type="Label" parent="." unique_id=76910776]
+offset_left = -20.0
+offset_top = -11.0
+offset_right = 20.0
+offset_bottom = 12.0
+text = "Parking
+"
+label_settings = SubResource("LabelSettings_xet2e")
+horizontal_alignment = 1
+vertical_alignment = 1

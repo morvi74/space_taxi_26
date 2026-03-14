@@ -10,12 +10,22 @@
 		{
 			"uuid": "219d96b5-15d5-442f-ac00-495ae08ca0f5",
 			"title": "Todo",
-			"tasks": []
+			"tasks": [
+				"d6ff059d-39e1-4bee-987f-7fd72bf1a173",
+				"e5da7849-627a-4a0b-984b-6dce9c86f89e",
+				"f5e46009-b543-424a-9d80-3d85c994862d",
+				"5c0f09c7-7e34-49cd-829c-cf836f061b94",
+				"2b86bdf5-c679-4d48-b33d-b7514007fb85",
+				"5a622120-1853-4e9d-9f3d-1ff680e9f54a",
+				"e6897326-7f40-45ae-9858-cfeb3e579816"
+			]
 		},
 		{
 			"uuid": "72baadbf-b28d-4405-b3f3-10122726f996",
 			"title": "Doing",
-			"tasks": []
+			"tasks": [
+				"638f7ac4-01a8-4146-be6d-92f82a6c0e57"
+			]
 		},
 		{
 			"uuid": "ffa6bac1-f44e-413c-b1df-aed62a7c771e",
@@ -23,7 +33,64 @@
 			"tasks": []
 		}
 	],
-	"tasks": [],
+	"tasks": [
+		{
+			"uuid": "638f7ac4-01a8-4146-be6d-92f82a6c0e57",
+			"title": "Passenger Cycle",
+			"description": "",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		},
+		{
+			"uuid": "d6ff059d-39e1-4bee-987f-7fd72bf1a173",
+			"title": "LandingPad Guide",
+			"description": "",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		},
+		{
+			"uuid": "e5da7849-627a-4a0b-984b-6dce9c86f89e",
+			"title": "Extended Junction System",
+			"description": "Special Junction2Ds for Landing Pads/Parking Pads. And how do I handle spawning/despawning of cars, police, etc.",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		},
+		{
+			"uuid": "f5e46009-b543-424a-9d80-3d85c994862d",
+			"title": "NPC Cars Spawning/Navigation System",
+			"description": "",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		},
+		{
+			"uuid": "5c0f09c7-7e34-49cd-829c-cf836f061b94",
+			"title": "Payment System",
+			"description": "",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		},
+		{
+			"uuid": "2b86bdf5-c679-4d48-b33d-b7514007fb85",
+			"title": "Review System",
+			"description": "",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		},
+		{
+			"uuid": "5a622120-1853-4e9d-9f3d-1ff680e9f54a",
+			"title": "Fuel Consumption",
+			"description": "",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		},
+		{
+			"uuid": "e6897326-7f40-45ae-9858-cfeb3e579816",
+			"title": "Speed Limited Area (and UI)",
+			"description": "",
+			"category": "ec102fd7-38d8-49af-a938-3deeb302de93",
+			"steps": []
+		}
+	],
 	"layout": {
 		"columns": [
 			[

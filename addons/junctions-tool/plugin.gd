@@ -2,14 +2,20 @@
 extends EditorPlugin
 
 const GRAPH_SCRIPT := preload("uid://we3g5e1jsacl")
-const POINT_SCENE := preload("uid://1xae4kmotven")
+#const POINT_SCENE := preload("res://src/junctions/junction_point_2d.tscn")  # Changed from UID#("uid://1xae4kmotven") # PackedScene of JunctionPoint2D
+const POINT_SCENE := preload("uid://1xae4kmotven") # JunctionPoint2D script, to ensure it's loaded and recognized as a type
 
 var _dragged_point: JunctionPoint2D = null
 var _drag_offset: Vector2 = Vector2.ZERO
 
 var _exception_start: JunctionPoint2D = null # First junction node of 2 that must not be connected to each other directly
 
-
+func _ready() -> void:
+	pass
+	# Debug: Check if POINT_SCENE loaded properly
+	# print("POINT_SCENE type: ", typeof(POINT_SCENE))
+	# print("POINT_SCENE value: ", POINT_SCENE)
+	# print("POINT_SCENE is PackedScene: ", POINT_SCENE is PackedScene)
 
 func _handles(object: Object) -> bool:
 	return object is JunctionGraph2D
@@ -53,14 +59,26 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
 			var clicked: JunctionPoint2D = _find_point_at(graph, mb.position)
 			if clicked != null:
+				# print("=== DRAG START ===")
+				# print("Clicked point: ", clicked)
+				# print("Clicked position: ", clicked.global_position)
+				
 				_dragged_point = clicked
-				_drag_offset = clicked.global_position - mb.position
+				var scene_root = get_editor_interface().get_edited_scene_root()
+				var scene_viewport = scene_root.get_viewport()
+				var world_mouse_pos = scene_viewport.get_mouse_position()
+				# print("World mouse pos at drag start: ", world_mouse_pos)
+				
+				_drag_offset = clicked.global_position - world_mouse_pos
+				# print("Drag offset: ", _drag_offset)
+				# print("=== END DRAG START ===")
 				return true
 
 			_create_point(graph, mb.position)
 			return true
 
 		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+			# print("DRAG END: _dragged_point was ", _dragged_point)
 			_dragged_point = null
 			return false
 
@@ -76,51 +94,60 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 	if event is InputEventMouseMotion:
 		var mm: InputEventMouseMotion = event
 		if _dragged_point != null:
-			_dragged_point.global_position = mm.position + _drag_offset
+			# print("DRAGGING: _dragged_point = ", _dragged_point)
+			var scene_root = get_editor_interface().get_edited_scene_root()
+			var scene_viewport = scene_root.get_viewport()
+			var world_mouse_pos = scene_viewport.get_mouse_position()
+			# print("Current world mouse pos: ", world_mouse_pos)
+			# print("New position will be: ", world_mouse_pos + _drag_offset)
+			
+			_dragged_point.global_position = world_mouse_pos + _drag_offset
 			graph.rebuild_graph()
 			return true
 
 	return false
 
 func _find_point_at(graph: JunctionGraph2D, mouse_pos: Vector2) -> JunctionPoint2D:
-	# Convert mouse_pos from canvas coordinates to global world coordinates
+	# Convert canvas coordinates to world coordinates using viewport
 	var editor_interface = get_editor_interface()
-	var base_control = editor_interface.get_base_control()
-	var viewport = base_control.get_viewport()
-	var canvas_xform = viewport.canvas_transform
-	var global_mouse_pos = canvas_xform.affine_inverse() * mouse_pos
-
+	var scene_root = editor_interface.get_edited_scene_root()
+	var scene_viewport = scene_root.get_viewport()
+	var world_mouse_pos = scene_viewport.get_mouse_position()
+	
+	# print("=== _find_point_at DEBUG ===")
+	# print("Canvas mouse_pos: ", mouse_pos)
+	# print("World mouse_pos: ", world_mouse_pos)
+	# print("Looking for points near: ", world_mouse_pos)
+	
 	for point: JunctionPoint2D in graph.get_junctions():
-		if point.global_position.distance_to(global_mouse_pos) <= point.radius + 8.0:
+		var distance = point.global_position.distance_to(world_mouse_pos)
+		# print("Point: ", point.name, " at ", point.global_position, " distance: ", distance, " (radius: ", point.radius, ")")
+		if distance <= point.radius + 8.0:
+			# print("FOUND POINT!")
 			return point
+	
+	# print("No point found")
 	return null
 
 func _create_point(graph: JunctionGraph2D, mouse_pos: Vector2) -> void:
-	var point: JunctionPoint2D = POINT_SCENE.instantiate() as JunctionPoint2D
+	# Create the node directly instead of instantiating from scene
+	var point := POINT_SCENE.instantiate() as JunctionPoint2D
+	#var point: JunctionPoint2D = JunctionPoint2D.new()
 	point.name = _generate_name(graph)
 
 	var editor_interface = get_editor_interface()
 	var scene_root = editor_interface.get_edited_scene_root()
 	
-	# Get the actual world mouse position from the viewport
 	var scene_viewport = scene_root.get_viewport()
 	var world_pos = scene_viewport.get_mouse_position()
 	
-	# # DEBUG
-	# print("=== DEBUG: _create_point Mk. IV ===")
-	# print("Raw editor window mouse_pos: ", mouse_pos)
-	# print("Actual world_pos from viewport: ", world_pos)
-	
-	# Convert world coordinates to local coordinates relative to the graph node
 	var local_pos = graph.to_local(world_pos)
-	# print("local_pos (relative to graph): ", local_pos)
-	# print("=== END DEBUG ===")
 	
 	point.position = local_pos
 
 	graph.add_child(point)
 	point.owner = editor_interface.get_edited_scene_root()
-	point.set_point_color(graph.default_point_color)
+	point.point_color = graph.default_point_color
 	graph.rebuild_graph()
 
 func _generate_name(graph: JunctionGraph2D) -> String:

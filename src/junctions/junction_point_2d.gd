@@ -1,6 +1,8 @@
 @tool
 class_name JunctionPoint2D
-extends Node2D
+extends Area2D
+var is_at_landing_zone: bool = false
+var my_landing_zone: Node2D = null
 
 # @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
 # @onready var _sprite: Sprite2D = $Sprite2D
@@ -38,3 +40,8 @@ func _notify_graph_changed() -> void:
 	var parent_node: Node = get_parent()
 	if parent_node != null and parent_node is JunctionGraph2D:
 		(parent_node as JunctionGraph2D).rebuild_graph()
+
+
+func _on_body_entered(body: Node2D) -> void:
+	is_at_landing_zone = true
+	my_landing_zone = body

@@ -1,5 +1,5 @@
 extends StaticBody2D
-class_name LandingPad
+class_name ParkikngLot
 
 
 
@@ -15,22 +15,19 @@ func is_occupied() -> bool:
 @onready var _right_ray: RayCast2D = $RightRay
 @onready var _label_id: Label = $IdLabel
 
-var _waiting_zone: WaitingZone
-func get_waiting_zone() -> WaitingZone:
-	return _waiting_zone
+var _my_waiting_zone: WaitingZone
 
 
 func setup(id: int) -> void:
 	_id = id
-	name = "LandingPad" + str(_id).pad_zeros(2)
 	_label_id.text = str(_id).pad_zeros(2)
 	_left_ray.force_raycast_update()
 	_right_ray.force_raycast_update()
 	if _left_ray.is_colliding():
-		_waiting_zone = _left_ray.get_collider() as WaitingZone
+		_my_waiting_zone = _left_ray.get_collider() as WaitingZone
 
 	elif _right_ray.is_colliding():
-		_waiting_zone = _right_ray.get_collider() as WaitingZone
+		_my_waiting_zone = _right_ray.get_collider() as WaitingZone
 	else:
 		printerr("Error: LandingPad ", _id, " has no waiting zone detected by rays. This should not happen if the level is set up correctly.")
-	_waiting_zone.set_landing_pad(self)
+	print("My waiting zone is: ", _my_waiting_zone.name)

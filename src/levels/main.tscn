@@ -10,9 +10,8 @@
 [ext_resource type="PackedScene" uid="uid://xpedx4lee1fy" path="res://src/characters/player/taxi.tscn" id="7_wn2xd"]
 [ext_resource type="PackedScene" uid="uid://cqmo1n2gndxgy" path="res://src/objects/landing_pad.tscn" id="8_n4k3i"]
 [ext_resource type="PackedScene" uid="uid://bryj2vkmdobmq" path="res://src/characters/npcs/biker.tscn" id="10_gp1ok"]
-[ext_resource type="PackedScene" uid="uid://3s13vtemc41a" path="res://src/characters/npcs/character_01.tscn" id="11_fjmvy"]
-[ext_resource type="PackedScene" uid="uid://ls3ssna6beko" path="res://src/objects/waiting_zone.tscn" id="12_xy8aq"]
-[ext_resource type="Script" uid="uid://ji21wjeqf75u" path="res://src/levels/level_manager.gd" id="13_76muk"]
+[ext_resource type="PackedScene" uid="uid://3s13vtemc41a" path="res://src/characters/npcs/passenger_01.tscn" id="11_fjmvy"]
+[ext_resource type="PackedScene" uid="uid://ccftgkxu1o8x" path="res://src/managers/level_manager.tscn" id="13_2q5fg"]
 [ext_resource type="Script" uid="uid://we3g5e1jsacl" path="res://src/junctions/junction_graph_2d.gd" id="14_2q5fg"]
 
 [sub_resource type="Resource" id="Resource_1u2ys"]
@@ -48,6 +47,13 @@ position = Vector2(378, 261)
 [node name="Building3" parent="." unique_id=950999585 instance=ExtResource("1_i52iv")]
 position = Vector2(828, 343)
 
+[node name="LandingPads" type="Node2D" parent="." unique_id=3099215]
+
+[node name="LandingPad" parent="LandingPads" unique_id=1215425304 instance=ExtResource("8_n4k3i")]
+position = Vector2(394, 225)
+
+[node name="Passengers" type="Node2D" parent="." unique_id=1571033725]
+
 [node name="Car" parent="." unique_id=428149262 instance=ExtResource("2_rn2v6")]
 position = Vector2(616, 175)
 _direction = Vector2(-1, 0)
@@ -76,20 +82,14 @@ metadata/_custom_type_script = "uid://bd046eokvcnu2"
 [node name="Taxi" parent="." unique_id=151031600 instance=ExtResource("7_wn2xd")]
 position = Vector2(384, 175)
 
-[node name="LandingPad" parent="." unique_id=1215425304 instance=ExtResource("8_n4k3i")]
-position = Vector2(394, 225)
-
 [node name="Biker" parent="." unique_id=1098498680 instance=ExtResource("10_gp1ok")]
 position = Vector2(318, 195)
 
 [node name="Character_01" parent="." unique_id=1577247864 instance=ExtResource("11_fjmvy")]
 position = Vector2(338, 221)
 
-[node name="WaitingZone" parent="." unique_id=1980633811 instance=ExtResource("12_xy8aq")]
-position = Vector2(331, 225)
+[node name="LevelManager" parent="." unique_id=1225576493 node_paths=PackedStringArray("_passenger_root_node") instance=ExtResource("13_2q5fg")]
+_passenger_root_node = NodePath("../Passengers")
 
-[node name="LevelManager" type="Node" parent="." unique_id=1017562754]
-script = ExtResource("13_76muk")
-
-[node name="Node2D" type="Node2D" parent="." unique_id=1153698352]
+[node name="JunctionGraph2D" type="Node2D" parent="." unique_id=864166342]
 script = ExtResource("14_2q5fg")

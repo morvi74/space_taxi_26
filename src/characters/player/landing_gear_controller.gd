@@ -56,7 +56,11 @@ var _is_dual_foot: bool = false
 @export var _landing_gear_root: Node2D# = $"../../LandingGearRoot"
 @export var _foot_left_ray: RayCast2D# = $"../../LandingGearRoot/FootLeftRay"
 @export var _foot_right_ray: RayCast2D# = $"../../LandingGearRoot/FootRightRay"
-@export var _ground_ray: RayCast2D# = $"../../LandingGearRoot/GroundRay"
+@export var _center_ray: RayCast2D# = $"../../LandingGearRoot/CenterRay"
+
+var _landing_pad_below: LandingPad = null
+func get_landing_pad_below() -> LandingPad:
+	return _landing_pad_below
 
 
 func _ready() -> void:
@@ -81,7 +85,10 @@ func toggle_gear() -> void:
 func _physics_process(delta: float) -> void:
 	if _state in [GearState.DEPLOYING, GearState.RETRACTING]:
 		_update_gear(delta)
-
+	if _center_ray.is_colliding():
+		_landing_pad_below = _center_ray.get_collider() as LandingPad
+	else:
+		_landing_pad_below = null
 
 # Updates the landing gear position based on the current _state and the deploy speed
 func _update_gear(delta: float) -> void:
@@ -113,9 +120,9 @@ func _apply_gear_positions() -> void:
 	root_position.y = _current_gear_y
 	_landing_gear_root.position = root_position
 
-	var ground_ray_position: Vector2 = _ground_ray.position
-	ground_ray_position.y = _current_gear_y
-	_ground_ray.position = ground_ray_position
+	var center_ray_position: Vector2 = _center_ray.position
+	center_ray_position.y = _current_gear_y
+	_center_ray.position = center_ray_position
 
 	if _is_dual_foot:
 		_left_foot_collision.position.y = _current_gear_y
@@ -146,6 +153,9 @@ func can_land() -> bool:
 		return false
 
 	if not _foot_right_ray.is_colliding():
+		return false
+
+	if not _center_ray.is_colliding():
 		return false
 
 	# if abs(_taxi.velocity.y) > _max_landing_speed:

@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://ccftgkxu1o8x"]
+
+[ext_resource type="Script" uid="uid://ji21wjeqf75u" path="res://src/managers/level_manager.gd" id="1_qw21y"]
+[ext_resource type="PackedScene" uid="uid://3s13vtemc41a" path="res://src/characters/npcs/passenger_01.tscn" id="2_p2dr5"]
+
+[node name="LevelManager" type="Node" unique_id=1225576493]
+script = ExtResource("1_qw21y")
+_passenger_scenes = Array[PackedScene]([ExtResource("2_p2dr5")])
+
+[node name="StartPassengerSpawnTimer" type="Timer" parent="." unique_id=990143288]
+wait_time = 5.0
+
+[connection signal="timeout" from="StartPassengerSpawnTimer" to="." method="_on_start_passenger_spawn_timer_timeout"]

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://biggorss156rn" path="res://src/objects/landing_pad.gd" id="1_xet2e"]
 [ext_resource type="Texture2D" uid="uid://djm0in1a63cly" path="res://assets/landing_stuff/LandingPad.png" id="2_xet2e"]
+[ext_resource type="PackedScene" uid="uid://ls3ssna6beko" path="res://src/objects/waiting_zone.tscn" id="3_vdlwm"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xet2e"]
 size = Vector2(96, 8)
@@ -40,3 +41,6 @@ collision_mask = 32
 position = Vector2(45, 0)
 target_position = Vector2(8, 0)
 collision_mask = 32
+
+[node name="WaitingZone" parent="." unique_id=1980633811 instance=ExtResource("3_vdlwm")]
+position = Vector2(-64, 0)

@@ -69,6 +69,7 @@ toggle_gear={
 2d_physics/layer_4="Passenger"
 2d_physics/layer_5="Car"
 2d_physics/layer_6="WaitingZone"
+2d_physics/layer_7="ParkingLot"
 
 [physics]
 

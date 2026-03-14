@@ -10,7 +10,7 @@ extends Node2D
 @export_flags_2d_physics var blocking_mask: int = (1 << 1) | (1 << 2) | (1 << 5)
 @export var auto_rebuild_in_editor: bool = true
 
-var connections: Dictionary = {}
+var connections: Dictionary[JunctionPoint2D, Array] =  {} # Dictionary<JunctionPoint2D, Array<JunctionPoint2D>>
 var _last_dragged: JunctionPoint2D = null
 
 func _ready() -> void:
@@ -32,8 +32,8 @@ func rebuild_graph() -> void:
 
 	var junctions: Array[JunctionPoint2D] = get_junctions()
 	for junction: JunctionPoint2D in junctions:
-		if junction.get_point_color() != default_point_color:
-			junction.set_point_color(default_point_color)
+		if junction.point_color != default_point_color:
+			junction.point_color = default_point_color
 		connections[junction] = []
 
 	for i: int in range(junctions.size()):
