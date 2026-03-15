@@ -6,13 +6,14 @@
 [ext_resource type="PackedScene" uid="uid://cwfvr1g86mvak" path="res://src/characters/cars/car.tscn" id="2_rn2v6"]
 [ext_resource type="Script" uid="uid://bhexx6mj1xv3q" path="res://addons/phantom_camera/scripts/phantom_camera/phantom_camera_2d.gd" id="4_w1vba"]
 [ext_resource type="Script" uid="uid://8umksf8e80fw" path="res://addons/phantom_camera/scripts/resources/tween_resource.gd" id="5_wn2xd"]
+[ext_resource type="PackedScene" uid="uid://ba33jxcyqgxn4" path="res://src/objects/landing_pad_left.tscn" id="5_xy8aq"]
 [ext_resource type="Script" uid="uid://bd046eokvcnu2" path="res://addons/phantom_camera/scripts/phantom_camera_host/phantom_camera_host.gd" id="6_n4k3i"]
 [ext_resource type="PackedScene" uid="uid://xpedx4lee1fy" path="res://src/characters/player/taxi.tscn" id="7_wn2xd"]
-[ext_resource type="PackedScene" uid="uid://cqmo1n2gndxgy" path="res://src/objects/landing_pad.tscn" id="8_n4k3i"]
-[ext_resource type="PackedScene" uid="uid://bryj2vkmdobmq" path="res://src/characters/npcs/biker.tscn" id="10_gp1ok"]
-[ext_resource type="PackedScene" uid="uid://3s13vtemc41a" path="res://src/characters/npcs/passenger_01.tscn" id="11_fjmvy"]
+[ext_resource type="PackedScene" uid="uid://cqmo1n2gndxgy" path="res://src/objects/landing_pad_right.tscn" id="8_n4k3i"]
 [ext_resource type="PackedScene" uid="uid://ccftgkxu1o8x" path="res://src/managers/level_manager.tscn" id="13_2q5fg"]
+[ext_resource type="PackedScene" uid="uid://1xae4kmotven" path="res://src/junctions/junction_point_2d.tscn" id="13_raadb"]
 [ext_resource type="Script" uid="uid://we3g5e1jsacl" path="res://src/junctions/junction_graph_2d.gd" id="14_2q5fg"]
+[ext_resource type="Script" uid="uid://dmcy0m7ag4dvk" path="res://src/junctions/junction_point_2d.gd" id="14_raadb"]
 
 [sub_resource type="Resource" id="Resource_1u2ys"]
 script = ExtResource("5_wn2xd")
@@ -52,10 +53,16 @@ position = Vector2(828, 343)
 [node name="LandingPad" parent="LandingPads" unique_id=1215425304 instance=ExtResource("8_n4k3i")]
 position = Vector2(394, 225)
 
+[node name="LandingPad2" parent="LandingPads" unique_id=1875492722 instance=ExtResource("8_n4k3i")]
+position = Vector2(132, 308)
+
+[node name="LandingPad3" parent="LandingPads" unique_id=364359557 instance=ExtResource("5_xy8aq")]
+position = Vector2(812, 307)
+
 [node name="Passengers" type="Node2D" parent="." unique_id=1571033725]
 
 [node name="Car" parent="." unique_id=428149262 instance=ExtResource("2_rn2v6")]
-position = Vector2(616, 175)
+position = Vector2(650, 73)
 _direction = Vector2(-1, 0)
 
 [node name="PhantomCamera2D" type="Node2D" parent="." unique_id=1730872812 node_paths=PackedStringArray("follow_target")]
@@ -82,14 +89,30 @@ metadata/_custom_type_script = "uid://bd046eokvcnu2"
 [node name="Taxi" parent="." unique_id=151031600 instance=ExtResource("7_wn2xd")]
 position = Vector2(384, 175)
 
-[node name="Biker" parent="." unique_id=1098498680 instance=ExtResource("10_gp1ok")]
-position = Vector2(318, 195)
-
-[node name="Character_01" parent="." unique_id=1577247864 instance=ExtResource("11_fjmvy")]
-position = Vector2(338, 221)
-
 [node name="LevelManager" parent="." unique_id=1225576493 node_paths=PackedStringArray("_passenger_root_node") instance=ExtResource("13_2q5fg")]
 _passenger_root_node = NodePath("../Passengers")
 
 [node name="JunctionGraph2D" type="Node2D" parent="." unique_id=864166342]
 script = ExtResource("14_2q5fg")
+
+[node name="Junction_1" type="Area2D" parent="JunctionGraph2D" unique_id=1167005099 instance=ExtResource("13_raadb")]
+position = Vector2(388.86435, 221.86801)
+collision_layer = 0
+collision_mask = 64
+script = ExtResource("14_raadb")
+
+[node name="Junction_2" type="Area2D" parent="JunctionGraph2D" unique_id=1455742350 instance=ExtResource("13_raadb")]
+position = Vector2(526.484, 133.23163)
+collision_layer = 0
+collision_mask = 64
+script = ExtResource("14_raadb")
+
+[node name="Junction_3" type="Area2D" parent="JunctionGraph2D" unique_id=1257500403 instance=ExtResource("13_raadb")]
+position = Vector2(810.5869, 302.5738)
+collision_layer = 0
+collision_mask = 64
+script = ExtResource("14_raadb")
+
+[connection signal="body_entered" from="JunctionGraph2D/Junction_1" to="JunctionGraph2D/Junction_1" method="_on_body_entered"]
+[connection signal="body_entered" from="JunctionGraph2D/Junction_2" to="JunctionGraph2D/Junction_2" method="_on_body_entered"]
+[connection signal="body_entered" from="JunctionGraph2D/Junction_3" to="JunctionGraph2D/Junction_3" method="_on_body_entered"]

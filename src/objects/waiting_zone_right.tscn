@@ -6,7 +6,8 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rp07f"]
 size = Vector2(32, 8)
 
-[node name="WaitingZone" type="StaticBody2D" unique_id=1980633811]
+[node name="WaitingZoneRight" type="StaticBody2D" unique_id=1980633811]
+position = Vector2(0, -2)
 collision_layer = 32
 collision_mask = 0
 script = ExtResource("1_rp07f")
@@ -18,7 +19,7 @@ texture = ExtResource("1_h4qii")
 shape = SubResource("RectangleShape2D_rp07f")
 
 [node name="WaitingPos" type="Marker2D" parent="." unique_id=1778139267]
-position = Vector2(7, -4)
+position = Vector2(-13, -4)
 
 [node name="LeavingPos" type="Marker2D" parent="." unique_id=556210080]
-position = Vector2(-13, -4)
+position = Vector2(7, -4)

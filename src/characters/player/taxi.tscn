@@ -39,15 +39,17 @@ z_index = -1
 texture = ExtResource("3_5lunm")
 
 [node name="FootLeftRay" type="RayCast2D" parent="LandingGearRoot" unique_id=926208323]
-position = Vector2(-19, 6)
-target_position = Vector2(0, 12)
+position = Vector2(-19, 4)
+target_position = Vector2(0, 5)
+collision_mask = 4
 
 [node name="FootRightRay" type="RayCast2D" parent="LandingGearRoot" unique_id=1841473616]
-position = Vector2(19, 6)
-target_position = Vector2(0, 12)
+position = Vector2(19, 4)
+target_position = Vector2(0, 5)
+collision_mask = 4
 
 [node name="CenterRay" type="RayCast2D" parent="LandingGearRoot" unique_id=706225817]
-position = Vector2(0, 5)
+position = Vector2(0, 4)
 target_position = Vector2(0, 32)
 collision_mask = 4
 
@@ -59,12 +61,13 @@ shape = SubResource("RectangleShape2D_vtusp")
 
 [node name="Controllers" type="Node" parent="." unique_id=533976680]
 
-[node name="LandingGearController" type="Node" parent="Controllers" unique_id=1693159647 node_paths=PackedStringArray("_landing_gear_root", "_foot_left_ray", "_foot_right_ray")]
+[node name="LandingGearController" type="Node" parent="Controllers" unique_id=1693159647 node_paths=PackedStringArray("_landing_gear_root", "_foot_left_ray", "_foot_right_ray", "_center_ray")]
 script = ExtResource("4_5lunm")
 _gear_retracted_y = 6.0
 _landing_gear_root = NodePath("../../LandingGearRoot")
 _foot_left_ray = NodePath("../../LandingGearRoot/FootLeftRay")
 _foot_right_ray = NodePath("../../LandingGearRoot/FootRightRay")
+_center_ray = NodePath("../../LandingGearRoot/CenterRay")
 
 [node name="PassengerController" type="Node" parent="Controllers" unique_id=237787143]
 

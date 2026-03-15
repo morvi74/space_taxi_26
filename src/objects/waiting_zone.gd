@@ -4,10 +4,10 @@ class_name WaitingZone
 
 @onready var _waiting_pos: Marker2D = $WaitingPos
 func get_waiting_position() -> Vector2:
-	return _waiting_pos.get_marker_position("WaitingPos").to_global()
+	return _waiting_pos.global_position
 @onready var _leaving_pos: Marker2D = $LeavingPos
 func get_leaving_position() -> Vector2:
-	return _leaving_pos.get_marker_position("LeavingPos").to_global()
+	return _leaving_pos.global_position
 
 var _direction_to_landing_pad: Vector2 = Vector2.ZERO
 func get_direction_to_landing_pad() -> Vector2:
@@ -36,3 +36,7 @@ func is_occupied() -> bool:
 	return _passenger != null
 func clear_passenger() -> void:
 	_passenger = null
+
+func send_passenger_to_taxi(taxi_x_pos: float) -> void:
+	if _passenger != null:
+		_passenger.walk_to_taxi(taxi_x_pos)

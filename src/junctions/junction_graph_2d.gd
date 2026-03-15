@@ -10,8 +10,17 @@ extends Node2D
 @export_flags_2d_physics var blocking_mask: int = (1 << 1) | (1 << 2) | (1 << 5)
 @export var auto_rebuild_in_editor: bool = true
 
-var connections: Dictionary[JunctionPoint2D, Array] =  {} # Dictionary<JunctionPoint2D, Array<JunctionPoint2D>>
+var connections: Dictionary = {} # Dictionary<JunctionPoint2D, Array<JunctionPoint2D>>
 var _last_dragged: JunctionPoint2D = null
+
+func _enter_tree() -> void:
+	if not child_exiting_tree.is_connected(_on_child_exiting_tree):
+		child_exiting_tree.connect(_on_child_exiting_tree)
+
+func _on_child_exiting_tree(node: Node) -> void:
+	if node is JunctionPoint2D:
+		# Rebuild after the node is actually removed to avoid stale object references.
+		call_deferred("rebuild_graph")
 
 func _ready() -> void:
 	rebuild_graph()
@@ -31,6 +40,7 @@ func rebuild_graph() -> void:
 	connections.clear()
 
 	var junctions: Array[JunctionPoint2D] = get_junctions()
+	_cleanup_invalid_exceptions(junctions)
 	for junction: JunctionPoint2D in junctions:
 		if junction.point_color != default_point_color:
 			junction.point_color = default_point_color
@@ -50,7 +60,32 @@ func rebuild_graph() -> void:
 
 	queue_redraw()
 
+func _cleanup_invalid_exceptions(junctions: Array[JunctionPoint2D]) -> void:
+	var valid_points: Dictionary = {}
+	for junction: JunctionPoint2D in junctions:
+		if junction != null and is_instance_valid(junction):
+			valid_points[junction] = true
+
+	for junction: JunctionPoint2D in junctions:
+		var ex: Array[JunctionPoint2D] = junction.exceptions
+		for i: int in range(ex.size() - 1, -1, -1):
+			var candidate: JunctionPoint2D = ex[i]
+			if candidate == null or not is_instance_valid(candidate) or candidate == junction or not valid_points.has(candidate):
+				ex.remove_at(i)
+
+		var seen: Dictionary = {}
+		for i: int in range(ex.size() - 1, -1, -1):
+			var candidate: JunctionPoint2D = ex[i]
+			if seen.has(candidate):
+				ex.remove_at(i)
+			else:
+				seen[candidate] = true
+
 func _is_exception(a: JunctionPoint2D, b: JunctionPoint2D) -> bool:
+	if a == null or b == null:
+		return false
+	if not is_instance_valid(a) or not is_instance_valid(b):
+		return false
 	return a.exceptions.has(b) or b.exceptions.has(a)
 
 func _has_clear_line(
@@ -91,11 +126,16 @@ func _draw() -> void:
 		return
 
 	# Linien
-	for from_junction: Variant in connections.keys():
-		var neighbors: Array = connections[from_junction]
+	for from_junction_variant: Variant in connections.keys():
+		var a: JunctionPoint2D = from_junction_variant as JunctionPoint2D
+		if a == null or not is_instance_valid(a):
+			continue
+
+		var neighbors: Array = connections.get(a, [])
 		for to_junction: Variant in neighbors:
-			var a: JunctionPoint2D = from_junction as JunctionPoint2D
 			var b: JunctionPoint2D = to_junction as JunctionPoint2D
+			if b == null or not is_instance_valid(b):
+				continue
 
 			if a.get_instance_id() < b.get_instance_id():
 				draw_line(
@@ -105,6 +145,15 @@ func _draw() -> void:
 					graph_width
 				)
 
+	# for junction in get_junctions():
+	# 	for ex in junction.exceptions:
+	# 		draw_line(
+	# 			to_local(junction.global_position),
+	# 			to_local(ex.global_position),
+	# 			Color(1,0,0,0.5),
+	# 			1.0
+	# 		)
+			
 	# Punkte im Game zusätzlich hier zeichnen, falls gewünscht.
 	if not Engine.is_editor_hint() and show_points_in_game:
 		for junction: JunctionPoint2D in get_junctions():
@@ -117,5 +166,10 @@ func _draw() -> void:
 func get_neighbors(point: JunctionPoint2D) -> Array[JunctionPoint2D]:
 	if not connections.has(point):
 		return []
-	return connections[point]
+	var neighbors: Array[JunctionPoint2D] = []
+	for candidate: Variant in connections.get(point, []):
+		var as_point: JunctionPoint2D = candidate as JunctionPoint2D
+		if as_point != null and is_instance_valid(as_point):
+			neighbors.append(as_point)
+	return neighbors
 

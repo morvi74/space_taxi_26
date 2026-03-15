@@ -87,8 +87,15 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
 			var clicked := _find_point_at(graph, mb.position)
 
 			if clicked != null:
+				for point: JunctionPoint2D in graph.get_junctions():
+					if point != clicked:
+						point.exceptions.erase(clicked)
+
+				if _exception_start == clicked:
+					_exception_start = null
+
 				clicked.queue_free()
-				graph.rebuild_graph()
+				graph.call_deferred("rebuild_graph")
 				return true
 
 	if event is InputEventMouseMotion:

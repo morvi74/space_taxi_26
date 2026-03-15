@@ -59,7 +59,7 @@ var _is_dual_foot: bool = false
 @export var _center_ray: RayCast2D# = $"../../LandingGearRoot/CenterRay"
 
 var _landing_pad_below: LandingPad = null
-func get_landing_pad_below() -> LandingPad:
+func get_current_landing_pad() -> LandingPad:
 	return _landing_pad_below
 
 
@@ -120,9 +120,9 @@ func _apply_gear_positions() -> void:
 	root_position.y = _current_gear_y
 	_landing_gear_root.position = root_position
 
-	var center_ray_position: Vector2 = _center_ray.position
-	center_ray_position.y = _current_gear_y
-	_center_ray.position = center_ray_position
+	# var center_ray_position: Vector2 = _center_ray.position
+	# center_ray_position.y = _current_gear_y
+	# _center_ray.position = center_ray_position
 
 	if _is_dual_foot:
 		_left_foot_collision.position.y = _current_gear_y
@@ -145,13 +145,13 @@ func is_broken() -> bool:
 func can_land() -> bool:
 	if _state != GearState.DEPLOYED:
 		return false
-
 	if _health <= 0:
 		return false
-
+	_foot_left_ray.force_raycast_update()
+	_foot_right_ray.force_raycast_update()
+	_center_ray.force_raycast_update()
 	if not _foot_left_ray.is_colliding():
 		return false
-
 	if not _foot_right_ray.is_colliding():
 		return false
 
@@ -165,7 +165,7 @@ func can_land() -> bool:
 
 
 # Updates the landing process, checking if the landing conditions are met and if the landing has been stable for the required time to be considered successful
-func update_landing(delta: float) -> bool:
+func landing_complete(delta: float) -> bool:
 	if can_land():
 		_stable_timer += delta
 

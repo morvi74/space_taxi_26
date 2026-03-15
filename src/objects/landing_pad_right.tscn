@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://biggorss156rn" path="res://src/objects/landing_pad.gd" id="1_xet2e"]
 [ext_resource type="Texture2D" uid="uid://djm0in1a63cly" path="res://assets/landing_stuff/LandingPad.png" id="2_xet2e"]
-[ext_resource type="PackedScene" uid="uid://ls3ssna6beko" path="res://src/objects/waiting_zone.tscn" id="3_vdlwm"]
+[ext_resource type="PackedScene" uid="uid://bdnmblqajs1hx" path="res://src/objects/waiting_zone_left.tscn" id="3_d4gbn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xet2e"]
 size = Vector2(96, 8)
@@ -11,7 +11,7 @@ size = Vector2(96, 8)
 font_size = 8
 font_color = Color(0, 0, 0, 1)
 
-[node name="LandingPad" type="StaticBody2D" unique_id=1215425304 groups=["landing_pads"]]
+[node name="LandingPadRight" type="StaticBody2D" unique_id=1215425304 groups=["landing_pads"]]
 collision_layer = 4
 collision_mask = 0
 script = ExtResource("1_xet2e")
@@ -42,5 +42,5 @@ position = Vector2(45, 0)
 target_position = Vector2(8, 0)
 collision_mask = 32
 
-[node name="WaitingZone" parent="." unique_id=1980633811 instance=ExtResource("3_vdlwm")]
+[node name="WaitingZone" parent="." unique_id=1980633811 instance=ExtResource("3_d4gbn")]
 position = Vector2(-64, 0)

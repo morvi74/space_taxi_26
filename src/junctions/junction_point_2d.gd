@@ -28,6 +28,7 @@ var my_landing_zone: Node2D = null
 func _ready() -> void:
 	queue_redraw()
 	_notify_graph_changed()
+	self.body_entered.connect(_on_body_entered)
 
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, radius, point_color)
@@ -43,5 +44,8 @@ func _notify_graph_changed() -> void:
 
 
 func _on_body_entered(body: Node2D) -> void:
+	if body is LandingPad:
+		var lp: LandingPad = body as LandingPad
+		print(name, ": I belong to LandingPad: ", lp.get_id())
 	is_at_landing_zone = true
 	my_landing_zone = body

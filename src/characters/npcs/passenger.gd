@@ -1,6 +1,9 @@
 extends Area2D
 class_name Passenger 
 
+
+
+
 @onready var _anim_player: AnimationPlayer = $AnimationPlayer
 @onready var _sprite: Sprite2D = $Sprite2D
 
@@ -33,44 +36,75 @@ enum State {
 
 var _state: State 
 var _moving_destination: Vector2 = Vector2.INF
+var _direction: Vector2 = Vector2.ZERO
+var _passenger_parent_node: Node2D = null
 
-func activate() -> void:
+
+
+# func _ready() -> void:
+# 	EventHub.taxi_landed.connect(_on_taxi_landed)
+
+func activate() -> void:	
 	_state = State.SPAWNING
+	global_position = _start_landing_pad.get_waiting_zone().get_waiting_position()
 	_anim_player.play("become_visible")
 
 
 func _physics_process(delta: float) -> void:
 	match _state:
 		State.WALKING_TO_TAXI:
-			var direction = (_moving_destination - global_position).normalized()
 			
-			global_position += direction * _walk_speed * delta
+			global_position += _direction * _walk_speed * delta
 			
 			if global_position.distance_to(_moving_destination) < 5.0:
 				global_position = _moving_destination
 				_enter_taxi()
+		State.LEAVING:
+			global_position += _direction * _walk_speed * delta
+			
+			if global_position.distance_to(_moving_destination) < 5.0:
+				global_position = _moving_destination
+				_state = State.DESPAWNING
+				_anim_player.play("become_invisible")
 
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "become_visible":
-		_state = State.WAITING_FOR_TAXI
-		if _start_landing_pad.get_waiting_zone()._direction_to_landing_pad == Vector2.RIGHT:
-			_anim_player.play("idle_right")
-		else:
-			_anim_player.play("idle_left")
+		if _state == State.SPAWNING:
+			_state = State.WAITING_FOR_TAXI
+			_direction = _start_landing_pad.get_waiting_zone()._direction_to_landing_pad
+			if _direction == Vector2.RIGHT:
+				_anim_player.play("idle_right")
+			else:
+				_anim_player.play("idle_left")
+			EventHub.emit_passenger_request_taxi(self, _start_landing_pad)
+		elif _state == State.EXIT_TAXI:
+			_state = State.LEAVING
+			EventHub.emit_passenger_exited_taxi(self)
+			if global_position.x < _destination_landing_pad.get_waiting_zone().get_leaving_position().x:
+				_direction = Vector2.RIGHT
+			else:
+				_direction = Vector2.LEFT
+			#_direction = _destination_landing_pad.get_waiting_zone()._direction_to_landing_pad
+			_moving_destination = _destination_landing_pad.get_waiting_zone().get_leaving_position()
+			print("Passenger ", name, " at pos: ", global_position, " is leaving towards landing pad: ", _destination_landing_pad.get_id(), " on global position: ", _destination_landing_pad.global_position, " with destination: ", _moving_destination)
+			if _direction == Vector2.RIGHT:
+				_anim_player.play("walk_right")
+			else:
+				_anim_player.play("walk_left")
 	elif anim_name == "become_invisible":
 		if _state == State.ENTER_TAXI:
 			_state = State.IN_TAXI
-	elif anim_name == "exit_taxi":
-		_state = State.LEAVING
-	elif anim_name == "despawn":
-		queue_free()
+			_start_landing_pad.clear_passenger()			
+			EventHub.emit_passenger_entered_taxi(self)
+		elif _state == State.DESPAWNING:
+			queue_free()
 
 
 func walk_to_taxi(pos_x: float) -> void:
 	if _state == State.WAITING_FOR_TAXI:
 		_state = State.WALKING_TO_TAXI
-		if _start_landing_pad.get_waiting_zone()._direction_to_landing_pad == Vector2.RIGHT:
+		if _direction == Vector2.RIGHT:
 			_anim_player.play("walk_right")
 		else:
 			_anim_player.play("walk_left")
@@ -82,3 +116,14 @@ func _enter_taxi() -> void:
 		_state = State.ENTER_TAXI
 		_anim_player.play("become_invisible")
 		
+
+func exit_taxi() -> void:
+	if _state == State.IN_TAXI:
+		_state = State.EXIT_TAXI
+		_anim_player.play("become_visible")
+
+
+# func _on_taxi_landed(landing_pad: LandingPad, taxi_pos_x: float) -> void:
+# 	if landing_pad == _destination_landing_pad and _state == State.IN_TAXI:
+# 		print("Passenger ", name, " has arrived at their destination landing pad.")
+# 		_exit_taxi()

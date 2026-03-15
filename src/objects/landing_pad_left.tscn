@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://ba33jxcyqgxn4"]
+
+[ext_resource type="Script" uid="uid://biggorss156rn" path="res://src/objects/landing_pad.gd" id="1_g76nj"]
+[ext_resource type="Texture2D" uid="uid://djm0in1a63cly" path="res://assets/landing_stuff/LandingPad.png" id="2_r5eqg"]
+[ext_resource type="PackedScene" uid="uid://ls3ssna6beko" path="res://src/objects/waiting_zone_right.tscn" id="3_roeox"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xet2e"]
+size = Vector2(96, 8)
+
+[sub_resource type="LabelSettings" id="LabelSettings_xet2e"]
+font_size = 8
+font_color = Color(0, 0, 0, 1)
+
+[node name="LandingPadLeft" type="StaticBody2D" unique_id=1215425304 groups=["landing_pads"]]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_g76nj")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=860101777]
+texture = ExtResource("2_r5eqg")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=510697553]
+shape = SubResource("RectangleShape2D_xet2e")
+
+[node name="IdLabel" type="Label" parent="." unique_id=76910776]
+offset_left = -20.0
+offset_top = -11.0
+offset_right = 20.0
+offset_bottom = 12.0
+text = "00"
+label_settings = SubResource("LabelSettings_xet2e")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LeftRay" type="RayCast2D" parent="." unique_id=1427987703]
+position = Vector2(-45, 0)
+target_position = Vector2(-8, 0)
+collision_mask = 32
+
+[node name="RightRay" type="RayCast2D" parent="." unique_id=1409937831]
+position = Vector2(45, 0)
+target_position = Vector2(8, 0)
+collision_mask = 32
+
+[node name="WaitingZone" parent="." unique_id=1980633811 instance=ExtResource("3_roeox")]
+position = Vector2(64, 0)

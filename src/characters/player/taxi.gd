@@ -32,12 +32,27 @@ var _is_landed: bool = false
 func is_landed() -> bool:
 	return _is_landed
 
+var _passengers_aboard: Array[Passenger] = []
+func get_passengers_aboard() -> Array[Passenger]:
+	return _passengers_aboard
+var _passenger_max_capacity: int = 1
+func get_passenger_count() -> int:
+	return _passengers_aboard.size()
+func get_passenger_capacity() -> int:
+	return _passenger_max_capacity
+func is_full() -> bool:
+	return _passengers_aboard.size() >= _passenger_max_capacity
+func erase_passenger_at(nr: int) -> void:
+	_passengers_aboard.remove_at(nr)
+	
 func _ready() -> void:
 	_landing_gear_controller.set_taxi(self)
 	if _mono_foot_collision:
 		_landing_gear_controller.set_mono_foot_collision(_mono_foot_collision)
 	_landing_gear_controller.gear_state_changed.connect(on_landing_gear_state_changed)
 	EventHub.emit_taxi_health_changed(_taxi_health)  # Emit initial health value to UI
+	GameData.set_taxi(self)  # Store reference to taxi in GameData for global access
+	EventHub.passenger_entered_taxi.connect(_on_passenger_entered_taxi)  # Connect signal to handle passengers entering taxi
 
 func _physics_process(delta: float) -> void:
 	_input_vector = _get_input_vector()
@@ -46,6 +61,7 @@ func _physics_process(delta: float) -> void:
 	_calculate_velocity_from_input(delta)
 	
 	if not is_on_floor() and _gravity != 0:
+		_is_landed = false  # If we're in the air, we're not landed, even if we were previously marked as landed. This allows us to properly detect new landings when we touch down again after being in the air.
 		_apply_gravity(delta)	
 	
 	_apply_thrusters(delta)
@@ -68,8 +84,10 @@ func _apply_flip() -> void:
 	# Flip sprite based on horizontal velocity
 	if _input_vector.x > 0:
 		_taxi_sprite.flip_h = false
+		_body_collision.scale.x = 1.0
 	elif _input_vector.x < 0:
 		_taxi_sprite.flip_h = true
+		_body_collision.scale.x = -1.0
 
 
 # Calculates the taxi's velocity based on player input, applying acceleration, deceleration, gravity, and clamping to maximum speed. Horizontal movement is affected by input and friction, while vertical movement is influenced by input and gravity.
@@ -99,10 +117,11 @@ func _calculate_velocity_from_input(delta: float) -> void:
 func toggle_landing_gear() -> void:
 	_landing_gear_controller.toggle_gear()
 
+
 func on_landing_gear_state_changed(new_state) -> void:
-	print("Landing gear state changed to:", new_state)
+	# print("Landing gear state changed to:", new_state)
 	if new_state == LandingGearController.GearState.RETRACTED:
-		print("Landing gear retracted")
+		# print("Landing gear retracted")
 		_mono_foot_collision.disabled = true
 	else:
 		_mono_foot_collision.disabled = false
@@ -129,26 +148,26 @@ func _handle_taxi_collisions(delta: float) -> void:
 		_collision_was_too_fast = collision_speed > _damage_threshold_speed
 
 		if _is_body_collision(local_shape):
-			print("Collision with taxi body detected")
+			# print("Collision with taxi body detected")
 
 			if _collision_was_too_fast: # Only apply damage if the collision was with the body and above the damage threshold
-				print("Collision speed above damage threshold, applying damage")
+				# print("Collision speed above damage threshold, applying damage")
 				# Apply damage to taxi health
 				_taxi_health -= int(round(_calculate_collision_damage(collision_speed)))
 				_taxi_health = max(_taxi_health, 0)
 				EventHub.emit_taxi_health_changed(_taxi_health)  # Emit signal to update UI
 
 			if collision_speed > _min_bounce_speed: # Only apply bounce if the collision speed is above the minimum threshold
-				print("Always applying bounce with cabin collision")
+				# print("Always applying bounce with cabin collision")
 				velocity = pre_move_velocity.bounce(collision.get_normal()) * _bounce_factor
 				return  # Skip further collision handling for this collision since we've already applied bounce
 		else:
 			if _collision_was_too_fast: # Only apply damage if the collision was with the body and above the damage threshold
-				print("Collision speed above damage threshold, applying damage")
+				# print("Collision speed above damage threshold, applying damage")
 				_landing_gear_controller.apply_damage(int(round(_calculate_collision_damage(collision_speed))))
 
 			if collision_speed > _min_bounce_speed: # Only apply bounce if the collision speed is above the minimum threshold
-				print("Landing gear not deployed, applying bounce")
+				# print("Landing gear not deployed, applying bounce")
 				velocity = pre_move_velocity.bounce(collision.get_normal()) * _bounce_factor
 				return  # Skip further collision handling for this collision since we've already applied bounce
 
@@ -156,13 +175,16 @@ func _handle_taxi_collisions(delta: float) -> void:
 			if _landing_gear_controller.get_state() == LandingGearController.GearState.DEPLOYED:
 				if collider is LandingPad: # Only check landing conditions if we're colliding with a landing pad
 					if not _landing_gear_controller.can_land():
-						print("Landing conditions not met, applying bounce")
+						# print("Landing conditions not met, applying bounce")
 						velocity = pre_move_velocity.bounce(collision.get_normal()) * _bounce_factor
 					else: # Landing conditions are met
-						print("Landing conditions met, allowing landing without bounce")
-						if _landing_gear_controller.update_landing(delta):
-							print("Successful landing, no bounce applied")
-			
+						# print("Landing conditions met, allowing landing without bounce")
+						if _landing_gear_controller.landing_complete(delta):
+							# print("Successful landing on landing pad ", _landing_gear_controller.get_current_landing_pad())
+							if not _is_landed:
+								_is_landed = true
+								EventHub.emit_taxi_landed(_landing_gear_controller.get_current_landing_pad(), global_position.x)
+
 		# # Calculate bounce based on collision normal and pre-move velocity
 		# var bounce_direction = collision.get_normal()
 		# if collider is LandingPad and local_shape == _mono_foot_collision:
@@ -216,3 +238,11 @@ func _apply_thrusters(_delta: float) -> void:
 # @return void
 func _move_taxi() -> void:
 	move_and_slide()
+
+func _on_passenger_entered_taxi(passenger: Passenger) -> void:
+	print("Passenger entered taxi:", passenger)
+	if not is_full():
+		_passengers_aboard.append(passenger)
+		print("Passenger added. Current count:", get_passenger_count())
+	else:
+		printerr("Taxi is full. Cannot add more passengers. Should not happen if landing pads check for taxi capacity before sending passengers.")

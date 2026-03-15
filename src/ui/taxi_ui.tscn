@@ -35,3 +35,14 @@ text = "Gear Health: "
 
 [node name="ValueLabel" type="Label" parent="VBoxContainer/GearHealthHBox" unique_id=1471672121]
 layout_mode = 2
+
+[node name="DestinationHBox" type="HBoxContainer" parent="VBoxContainer" unique_id=418790028]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer/DestinationHBox" unique_id=2045732659]
+layout_mode = 2
+text = "Dest.: "
+
+[node name="ValueLabel" type="Label" parent="VBoxContainer/DestinationHBox" unique_id=1341638411]
+layout_mode = 2
+text = "None"
