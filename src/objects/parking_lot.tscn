@@ -24,11 +24,10 @@ shape = SubResource("RectangleShape2D_xet2e")
 
 [node name="IdLabel" type="Label" parent="." unique_id=76910776]
 offset_left = -20.0
-offset_top = -11.0
+offset_top = -13.0
 offset_right = 20.0
-offset_bottom = 12.0
-text = "Parking
-"
+offset_bottom = 14.0
+text = "Parking"
 label_settings = SubResource("LabelSettings_xet2e")
 horizontal_alignment = 1
 vertical_alignment = 1

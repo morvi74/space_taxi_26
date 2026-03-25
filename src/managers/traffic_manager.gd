@@ -19,6 +19,8 @@ const ParkingLotType = preload("res://src/objects/parking_lot.gd")
 @export var min_spawn_to_initial_destination_distance: float = 1200.0
 @export var despawn_node_distance: float = 26.0
 @export var building_collision_mask: int = 1 << 1 # Layer 2
+@export var debug_npc_sensor_overlay: bool = false
+@export var debug_npc_sensor_line_width: float = 2.0
 
 var _traffic_network: TrafficNetworkType
 var _destination_nodes: Array[TrafficNodeType] = []
@@ -27,12 +29,16 @@ var _player_camera: Camera2D
 var _player_node: Node2D
 var _active_cars: Array[NPCCarType] = []
 var _rng := RandomNumberGenerator.new()
+var _last_debug_npc_sensor_overlay: bool = false
+var _last_debug_npc_sensor_line_width: float = 0.0
 
 @onready var _spawn_timer: Timer = $SpawnTimer
 #@onready var _despawn_timer: Timer = $DespawnTimer
 
 func _ready() -> void:
 	_rng.randomize()
+	_last_debug_npc_sensor_overlay = debug_npc_sensor_overlay
+	_last_debug_npc_sensor_line_width = debug_npc_sensor_line_width
 	_player_camera = _resolve_player_camera()
 	_player_node = _resolve_player_node()
 
@@ -50,10 +56,19 @@ func _ready() -> void:
 	_traffic_network.graph_built.connect(_start, CONNECT_ONE_SHOT)
 
 
+func _process(_delta: float) -> void:
+	if _last_debug_npc_sensor_overlay == debug_npc_sensor_overlay and is_equal_approx(_last_debug_npc_sensor_line_width, debug_npc_sensor_line_width):
+		return
+
+	_last_debug_npc_sensor_overlay = debug_npc_sensor_overlay
+	_last_debug_npc_sensor_line_width = debug_npc_sensor_line_width
+	_apply_debug_visualization_to_all_cars()
+
+
 func _start() -> void:	
 	_find_destination_nodes()
 	print("TrafficManager: Found ", _destination_nodes.size(), " destination nodes.")
-	max_active_cars = _destination_nodes.size() - 1 # Only spawn as many cars as available destinations to avoid gridlock. If there are 5 destination nodes, only spawn 4 cars at most so there's always a free spot to move into.
+	max_active_cars = int(round(_destination_nodes.size() * 0.5)) # Only spawn as many cars as available destinations to avoid gridlock. If there are 5 destination nodes, only spawn 4 cars at most so there's always a free spot to move into.
 	_find_spawn_nodes()
 	_spawn_timer.wait_time = spawn_interval
 	_spawn_timer.start()
@@ -145,6 +160,7 @@ func _register_car(car: NPCCarType) -> void:
 	_active_cars.append(car)
 	car.set_network(_traffic_network)
 	car.set_traffic_manager(self)  # Cars can now request destinations autonomously
+	_apply_debug_visualization_to_car(car)
 	if not car.tree_exited.is_connected(_on_car_tree_exited):
 		car.tree_exited.connect(_on_car_tree_exited.bind(car))
 
@@ -157,7 +173,40 @@ func _on_car_tree_exited(car: NPCCarType) -> void:
 	_active_cars.erase(car)
 
 
+func _apply_debug_visualization_to_all_cars() -> void:
+	for car: NPCCarType in _active_cars:
+		if car == null or not is_instance_valid(car):
+			continue
+		_apply_debug_visualization_to_car(car)
+
+
+func _apply_debug_visualization_to_car(car: NPCCarType) -> void:
+	if car == null:
+		return
+	car.debug_draw_sensors = debug_npc_sensor_overlay
+	car.debug_sensor_line_width = debug_npc_sensor_line_width
+
+
 func request_next_destination(car: NPCCarType, avoid_node: TrafficNodeType = null, min_distance_from_avoid: float = 0.0) -> TrafficNodeType:
+	return _request_next_destination_internal(car, avoid_node, min_distance_from_avoid, null, null, [], true)
+
+
+func request_next_destination_excluding(car: NPCCarType, avoid_node: TrafficNodeType = null, min_distance_from_avoid: float = 0.0, excluded_destination: TrafficNodeType = null) -> TrafficNodeType:
+	var excluded_nodes: Array[TrafficNodeType] = []
+	if excluded_destination != null:
+		excluded_nodes.append(excluded_destination)
+	return _request_next_destination_internal(car, avoid_node, min_distance_from_avoid, null, null, excluded_nodes, true)
+
+
+func request_alternative_destination(car: NPCCarType, start_node: TrafficNodeType, temporary_no_go_node: TrafficNodeType = null, excluded_destination: TrafficNodeType = null) -> TrafficNodeType:
+	var excluded_nodes: Array[TrafficNodeType] = []
+	if excluded_destination != null:
+		excluded_nodes.append(excluded_destination)
+	# Alternative routes after a block should not be constrained by spawn-distance rules.
+	return _request_next_destination_internal(car, null, 0.0, start_node, temporary_no_go_node, excluded_nodes, false)
+
+
+func _request_next_destination_internal(car: NPCCarType, avoid_node: TrafficNodeType, min_distance_from_avoid: float, start_node: TrafficNodeType, temporary_no_go_node: TrafficNodeType, excluded_nodes: Array[TrafficNodeType], apply_default_min_distance: bool) -> TrafficNodeType:
 	"""Called by cars to request the next destination. Returns a TrafficNode or null.
 	Cars call this when they reach their destination and are ready to move to the next goal.
 	"""
@@ -165,7 +214,7 @@ func request_next_destination(car: NPCCarType, avoid_node: TrafficNodeType = nul
 		return null
 
 	var effective_min_distance: float = min_distance_from_avoid
-	if effective_min_distance <= 0.0:
+	if apply_default_min_distance and effective_min_distance <= 0.0:
 		effective_min_distance = min_spawn_to_initial_destination_distance
 
 	# Release the car's current destination so another car can claim it.
@@ -177,19 +226,31 @@ func request_next_destination(car: NPCCarType, avoid_node: TrafficNodeType = nul
 	if nodes.size() < 2:
 		return null
 
-	# Tier 1: unoccupied destination nodes (never the spawn/avoid node).
+	# Tier 1: all destination nodes (occupancy is handled by car-side awareness/re-routing).
 	var candidates: Array[TrafficNodeType] = []
 	for node: TrafficNodeType in nodes:
+		if _is_node_excluded(node, excluded_nodes):
+			continue
 		if not _passes_avoid_constraints(node, avoid_node, effective_min_distance):
 			continue
-		if node.can_be_destination and not node.is_occupied:
+		if temporary_no_go_node != null and node == temporary_no_go_node:
+			continue
+		if not _is_reachable_with_constraints(start_node, node, temporary_no_go_node):
+			continue
+		if node.can_be_destination:
 			candidates.append(node)
 
 	# Tier 2: all destination spots are full — use non-destination routing nodes so
 	# the car keeps circulating until a spot frees up.
 	if candidates.is_empty():
 		for node: TrafficNodeType in nodes:
+			if _is_node_excluded(node, excluded_nodes):
+				continue
 			if not _passes_avoid_constraints(node, avoid_node, effective_min_distance):
+				continue
+			if temporary_no_go_node != null and node == temporary_no_go_node:
+				continue
+			if not _is_reachable_with_constraints(start_node, node, temporary_no_go_node):
 				continue
 			if not node.can_be_destination:
 				candidates.append(node)
@@ -198,10 +259,35 @@ func request_next_destination(car: NPCCarType, avoid_node: TrafficNodeType = nul
 		return null
 
 	var target := candidates[_rng.randi() % candidates.size()]
-	# Only claim destination nodes — routing nodes have no occupation tracking.
+	# Occupation state is now informational for movement/arrival handling.
 	if target.can_be_destination and not target.is_occupied:
 		target.claim()
 	return target
+
+
+func _is_node_excluded(node: TrafficNodeType, excluded_nodes: Array[TrafficNodeType]) -> bool:
+	for excluded: TrafficNodeType in excluded_nodes:
+		if excluded == node:
+			return true
+	return false
+
+
+func _is_reachable_with_constraints(start_node: TrafficNodeType, target_node: TrafficNodeType, temporary_no_go_node: TrafficNodeType) -> bool:
+	if start_node == null:
+		return true
+	if target_node == null:
+		return false
+	if temporary_no_go_node != null:
+		if start_node == temporary_no_go_node or target_node == temporary_no_go_node:
+			return false
+	if start_node == target_node:
+		return true
+
+	var avoid_nodes: Array[TrafficNodeType] = []
+	if temporary_no_go_node != null:
+		avoid_nodes.append(temporary_no_go_node)
+
+	return _traffic_network.has_path_between_nodes_avoiding(start_node, target_node, avoid_nodes)
 
 
 func _passes_avoid_constraints(node: TrafficNodeType, avoid_node: TrafficNodeType, effective_min_distance: float) -> bool:
@@ -221,7 +307,7 @@ func _get_destination_candidate_stats(avoid_node: TrafficNodeType, effective_min
 	for node: TrafficNodeType in nodes:
 		if not _passes_avoid_constraints(node, avoid_node, effective_min_distance):
 			continue
-		if node.can_be_destination and not node.is_occupied:
+		if node.can_be_destination:
 			tier1_count += 1
 
 	var tier2_count: int = 0

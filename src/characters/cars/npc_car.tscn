@@ -9,6 +9,7 @@ bounce = 0.4
 
 [node name="NPCCar" type="RigidBody2D" unique_id=2017087938]
 collision_layer = 16
+collision_mask = 87
 physics_material_override = SubResource("PhysicsMaterial_igko8")
 gravity_scale = 0.0
 freeze_mode = 1

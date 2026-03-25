@@ -6,6 +6,7 @@ signal graph_built
 @export var auto_connect_radius: float = 300.0
 @export var print_spawn_debug: bool = false
 @export var draw_connections_on_start: bool = false
+@export var min_surface_connection_angle_degrees: float = 60.0
 
 # Layers are 1-based in Godot; this blocks graph links through layers 2, 3, and 7.
 const BLOCKING_COLLISION_MASK: int = (1 << 1) | (1 << 2) | (1 << 6)
@@ -61,6 +62,8 @@ func build_graph() -> void:
 			var pos_a := _all_nodes[i].global_position
 			var pos_b := _all_nodes[j].global_position
 			if pos_a.distance_to(pos_b) > auto_connect_radius:
+				continue
+			if not _passes_surface_connection_angle_constraint(_all_nodes[i], _all_nodes[j]):
 				continue
 
 			var query := PhysicsRayQueryParameters2D.create(pos_a, pos_b)
@@ -190,6 +193,66 @@ func get_path_distance_between_nodes(from_node: TrafficNode, to_node: TrafficNod
 	return total_distance
 
 
+func get_path_between_nodes_avoiding(from_node: TrafficNode, to_node: TrafficNode, avoid_nodes: Array[TrafficNode]) -> PackedVector2Array:
+	if from_node == null or to_node == null:
+		return PackedVector2Array()
+	if not _id_by_node.has(from_node) or not _id_by_node.has(to_node):
+		return PackedVector2Array()
+
+	var disabled_ids := _collect_disabled_ids(avoid_nodes)
+	var from_id: int = _id_by_node[from_node]
+	var to_id: int = _id_by_node[to_node]
+	if disabled_ids.has(from_id) or disabled_ids.has(to_id):
+		return PackedVector2Array()
+
+	if from_id == to_id:
+		return PackedVector2Array([to_node.global_position])
+
+	var filtered_astar := _build_filtered_astar(disabled_ids)
+	return filtered_astar.get_point_path(from_id, to_id)
+
+
+func has_path_between_nodes_avoiding(from_node: TrafficNode, to_node: TrafficNode, avoid_nodes: Array[TrafficNode]) -> bool:
+	return not get_path_between_nodes_avoiding(from_node, to_node, avoid_nodes).is_empty()
+
+
+func _collect_disabled_ids(avoid_nodes: Array[TrafficNode]) -> Dictionary:
+	var disabled_ids: Dictionary = {}
+	for node: TrafficNode in avoid_nodes:
+		if node == null:
+			continue
+		if _id_by_node.has(node):
+			disabled_ids[_id_by_node[node]] = true
+	return disabled_ids
+
+
+func _build_filtered_astar(disabled_ids: Dictionary) -> AStar2D:
+	var filtered_astar := AStar2D.new()
+
+	for id_variant: Variant in astar.get_point_ids():
+		var id: int = int(id_variant)
+		if disabled_ids.has(id):
+			continue
+		filtered_astar.add_point(id, astar.get_point_position(id), astar.get_point_weight_scale(id))
+
+	for id_variant: Variant in astar.get_point_ids():
+		var from_id: int = int(id_variant)
+		if disabled_ids.has(from_id) or not filtered_astar.has_point(from_id):
+			continue
+
+		for to_variant: Variant in astar.get_point_connections(from_id):
+			var to_id: int = int(to_variant)
+			if disabled_ids.has(to_id) or not filtered_astar.has_point(to_id):
+				continue
+			if from_id >= to_id:
+				continue
+			if filtered_astar.are_points_connected(from_id, to_id, true):
+				continue
+			filtered_astar.connect_points(from_id, to_id, true)
+
+	return filtered_astar
+
+
 func _apply_manual_overrides() -> void:
 	# NoEntry: remove connectivity in both directions.
 	for barrier in get_tree().get_nodes_in_group("NoEntryLinks"):
@@ -226,3 +289,32 @@ func _resolve_link_point(link: Node, marker_name: String, property_name: String)
 	if property_name in link:
 		return link.get(property_name) as Node2D
 	return null
+
+
+func _passes_surface_connection_angle_constraint(node_a: TrafficNode, node_b: TrafficNode) -> bool:
+	if node_a == null or node_b == null:
+		return false
+
+	if _is_surface_bound_node(node_a):
+		if _connection_angle_to_horizontal_degrees(node_a.global_position, node_b.global_position) < min_surface_connection_angle_degrees:
+			return false
+
+	if _is_surface_bound_node(node_b):
+		if _connection_angle_to_horizontal_degrees(node_b.global_position, node_a.global_position) < min_surface_connection_angle_degrees:
+			return false
+
+	return true
+
+
+func _is_surface_bound_node(node: TrafficNode) -> bool:
+	return node.get_landing_pad() != null or node.get_parking_lot() != null
+
+
+func _connection_angle_to_horizontal_degrees(from_pos: Vector2, to_pos: Vector2) -> float:
+	var direction: Vector2 = (to_pos - from_pos).normalized()
+	if direction == Vector2.ZERO:
+		return 0.0
+
+	var horizontal_alignment: float = absf(direction.dot(Vector2.RIGHT))
+	horizontal_alignment = clampf(horizontal_alignment, 0.0, 1.0)
+	return rad_to_deg(acos(horizontal_alignment))
