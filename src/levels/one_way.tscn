@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dgupfa2qhwco4"]
+
+[ext_resource type="Script" uid="uid://bipq4h6ie2jpm" path="res://src/levels/one_way.gd" id="1_eqwyr"]
+
+[node name="OneWay" type="Node2D" unique_id=82454990]
+script = ExtResource("1_eqwyr")
+
+[node name="PointA" type="Marker2D" parent="." unique_id=1723508500]
+
+[node name="PointB" type="Marker2D" parent="." unique_id=96248241]
+position = Vector2(64, 64)

@@ -46,3 +46,14 @@ text = "Dest.: "
 [node name="ValueLabel" type="Label" parent="VBoxContainer/DestinationHBox" unique_id=1341638411]
 layout_mode = 2
 text = "None"
+
+[node name="PaymentHBox" type="HBoxContainer" parent="VBoxContainer" unique_id=791907874]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer/PaymentHBox" unique_id=584176563]
+layout_mode = 2
+text = "Dest.: "
+
+[node name="ValueLabel" type="Label" parent="VBoxContainer/PaymentHBox" unique_id=1103246888]
+layout_mode = 2
+text = "None"

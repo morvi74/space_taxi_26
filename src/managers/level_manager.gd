@@ -28,7 +28,7 @@ func _ready() -> void:
 	_start_passenger_spawn_timer.start()
 	EventHub.passenger_entered_taxi.connect(_on_passenger_entered_taxi)
 	EventHub.passenger_exited_taxi.connect(_on_passenger_exited_taxi)
-
+	ManagerHub.set_level_manager(self)
 
 # This function is called every time the _start_passenger_spawn_timer times out. 
 # It checks if a new passenger should be spawned and if so, spawns one.
@@ -51,6 +51,7 @@ func _spawn_passenger() -> Passenger:
 	while dest_lp == start_lp:
 		dest_lp = _landing_pads[rng.randi() % _landing_pads.size()]
 	passenger.set_destination_landing_pad(dest_lp)
+	passenger.set_passenger_parent_node(_passenger_root_node)
 	start_lp.assign_passenger(passenger)
 
 	_passenger_root_node.add_child(passenger)
@@ -63,7 +64,7 @@ func _spawn_passenger() -> Passenger:
 func _check_if_passenger_should_spawn() -> bool:
 	_find_free_landing_pads()
 	if _free_landing_pads.size() >= int(round(_landing_pads.size() * 0.5)):
-		print("Spawning new passenger. Free landing pads: ", _free_landing_pads.size(), "/", _landing_pads.size())
+		#print("Spawning new passenger. Free landing pads: ", _free_landing_pads.size(), "/", _landing_pads.size())
 		return true
 	else:
 		return false

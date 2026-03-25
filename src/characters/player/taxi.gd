@@ -22,8 +22,8 @@ const _SAFE_LANDING_SPEED = 100.0
 @export var _damage_threshold_speed: float = 80.0
 var _collision_was_too_fast: bool = false	
 @export var _bounce_factor: float = 0.5  # How much velocity is retained after a bounce (0.5 means 50% retained)
-var pre_move_velocity: Vector2 = Vector2.ZERO  # Store velocity before move_and_slide for bounce calculations
-
+var _old_velocity: Vector2 = Vector2.ZERO  # Store velocity before move_and_slide for bounce calculations
+@export var _lift_off_assist_force: float = -30.0 # Upward force applied when taking off to help with lift-off, can be adjusted for better feel
 var _taxi_health: int = 100
 
 var _input_vector: Vector2 = Vector2.ZERO
@@ -45,6 +45,16 @@ func is_full() -> bool:
 func erase_passenger_at(nr: int) -> void:
 	_passengers_aboard.remove_at(nr)
 	
+var is_controller = false
+
+var last_acceleration: Vector2 = Vector2.ZERO
+var total_jerk_stress: float = 0.0
+
+var last_input_x: float = 0.0
+var reaction_timer: float = 0.0
+
+
+
 func _ready() -> void:
 	_landing_gear_controller.set_taxi(self)
 	if _mono_foot_collision:
@@ -54,9 +64,11 @@ func _ready() -> void:
 	GameData.set_taxi(self)  # Store reference to taxi in GameData for global access
 	EventHub.passenger_entered_taxi.connect(_on_passenger_entered_taxi)  # Connect signal to handle passengers entering taxi
 
-func _physics_process(delta: float) -> void:
-	_input_vector = _get_input_vector()
 
+func _physics_process(delta: float) -> void:
+	_old_velocity = velocity
+	_input_vector = _get_input_vector()
+	_check_hectic_input(_input_vector.x, delta)
 	_apply_flip()
 	_calculate_velocity_from_input(delta)
 	
@@ -66,15 +78,55 @@ func _physics_process(delta: float) -> void:
 	
 	_apply_thrusters(delta)
 	
-	pre_move_velocity = velocity
 	
 	_move_taxi()
-	
+	# 1. Measure g-force (acceleration).
+	#var acceleration = (velocity - _old_velocity).length() / delta
+	#print("Acceleration (G-Force): ", acceleration)
+	_monitor_jerk(velocity, delta)  # Monitor jerk to detect sudden acceleration changes.
 	_handle_taxi_collisions(delta)
+	_process_stable_landing(delta)
 
 	# Handle gear toggle
 	if Input.is_action_just_pressed("toggle_gear"):
 		toggle_landing_gear()
+
+
+
+func _input(event):
+	if event is InputEventJoypadMotion or event is InputEventJoypadButton:
+		is_controller = true
+	elif event is InputEventKey:
+		is_controller = false
+
+
+func get_jerk_threshold():
+	return 5000.0 if is_controller else 8000.0 # Tastatur darf "ruckeliger" sein
+
+
+func _monitor_jerk(current_velocity: Vector2, delta: float):
+	# Current acceleration in this frame.
+	var current_accel = (current_velocity - _old_velocity) / delta
+	
+	# Jerk is the change in acceleration.
+	var jerk = (current_accel - last_acceleration).length()
+	
+	# Ignore small jitters and accumulate only the larger spikes.
+	if jerk > get_jerk_threshold(): # Adjust threshold as needed.
+		total_jerk_stress += jerk * delta
+		
+	last_acceleration = current_accel
+
+
+
+func _check_hectic_input(input_x: float, delta: float):
+	reaction_timer -= delta
+	if input_x != 0 and input_x != last_input_x:
+		if reaction_timer > 0:
+			# Player changed direction within 0.5s.
+			total_jerk_stress += 20.0 
+		reaction_timer = 0.5 
+		last_input_x = input_x
 
 
 # Flips the taxi sprite based on horizontal movement direction. This provides visual feedback to the player, making it clear which way the taxi is moving. The sprite will flip horizontally when moving left and return to normal when moving right.
@@ -102,10 +154,18 @@ func _calculate_velocity_from_input(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, _DECELERATION)
 	
 	# Y-axis: accelerate with input, decelerate only for upward movement without input
-	if _input_vector.y != 0:
-		velocity.y += _input_vector.y * _ACCELERATION * delta
-	elif velocity.y < 0:  # Only decelerate upward movement, not downward
-		velocity.y = move_toward(velocity.y, 0, _DECELERATION)
+	if _is_landed:
+		# Retract landing gear and give taxi an upward velocity impulse to take off.
+		if _input_vector.y < 0:
+			if _landing_gear_controller.get_state() == LandingGearController.GearState.DEPLOYED:
+				_landing_gear_controller.toggle_gear()  # Retract gear once (guard prevents re-toggling every frame)
+			velocity.y = _lift_off_assist_force  # Negative y = upward in Godot 2D; kick taxi off the ground
+			_is_landed = false   # Exit landed state so normal flight controls take over next frame
+	else:
+		if _input_vector.y != 0:
+			velocity.y += _input_vector.y * _ACCELERATION * delta
+		elif velocity.y < 0:  # Only decelerate upward movement, not downward
+			velocity.y = move_toward(velocity.y, 0, _DECELERATION)
 	
 	# Clamp horizontal speed to maximum
 	if velocity.x > _MAX_SPEED:
@@ -138,16 +198,20 @@ func _get_input_vector() -> Vector2:
 	result.y = Input.get_action_strength("thrust_down") - Input.get_action_strength("thrust_up")
 	return result
 
-
+@warning_ignore("unused_parameter")
 func _handle_taxi_collisions(delta: float) -> void:
 	for i in range(get_slide_collision_count()):
 		var collision : KinematicCollision2D = get_slide_collision(i)
 		var collider : Node = collision.get_collider()
+		var collided_landing_pad: LandingPad = _resolve_landing_pad_from_collider(collider)
 		var local_shape = collision.get_local_shape()
-		var collision_speed : float = pre_move_velocity.length()
+		var gear_landing_pad: LandingPad = _landing_gear_controller.get_current_landing_pad()
+		var collision_speed : float = _old_velocity.length()
 		_collision_was_too_fast = collision_speed > _damage_threshold_speed
+		var is_body_hit: bool = _is_body_collision(local_shape)
+		var is_gear_hit: bool = _is_gear_collision(local_shape)
 
-		if _is_body_collision(local_shape):
+		if is_body_hit:
 			# print("Collision with taxi body detected")
 
 			if _collision_was_too_fast: # Only apply damage if the collision was with the body and above the damage threshold
@@ -159,7 +223,7 @@ func _handle_taxi_collisions(delta: float) -> void:
 
 			if collision_speed > _min_bounce_speed: # Only apply bounce if the collision speed is above the minimum threshold
 				# print("Always applying bounce with cabin collision")
-				velocity = pre_move_velocity.bounce(collision.get_normal()) * _bounce_factor
+				velocity = _old_velocity.bounce(collision.get_normal()) * _bounce_factor
 				return  # Skip further collision handling for this collision since we've already applied bounce
 		else:
 			if _collision_was_too_fast: # Only apply damage if the collision was with the body and above the damage threshold
@@ -168,22 +232,17 @@ func _handle_taxi_collisions(delta: float) -> void:
 
 			if collision_speed > _min_bounce_speed: # Only apply bounce if the collision speed is above the minimum threshold
 				# print("Landing gear not deployed, applying bounce")
-				velocity = pre_move_velocity.bounce(collision.get_normal()) * _bounce_factor
+				velocity = _old_velocity.bounce(collision.get_normal()) * _bounce_factor
 				return  # Skip further collision handling for this collision since we've already applied bounce
 
-			# If the landing gear is deployed, we need to check if the collision is with a landing pad and if the landing conditions are met. If not, we apply bounce. If the landing conditions are met, we allow the landing to proceed without bounce.			
-			if _landing_gear_controller.get_state() == LandingGearController.GearState.DEPLOYED:
-				if collider is LandingPad: # Only check landing conditions if we're colliding with a landing pad
-					if not _landing_gear_controller.can_land():
-						# print("Landing conditions not met, applying bounce")
-						velocity = pre_move_velocity.bounce(collision.get_normal()) * _bounce_factor
-					else: # Landing conditions are met
-						# print("Landing conditions met, allowing landing without bounce")
-						if _landing_gear_controller.landing_complete(delta):
-							# print("Successful landing on landing pad ", _landing_gear_controller.get_current_landing_pad())
-							if not _is_landed:
-								_is_landed = true
-								EventHub.emit_taxi_landed(_landing_gear_controller.get_current_landing_pad(), global_position.x)
+			# Gear-side collision path: keep separate from body mechanics.
+			if _landing_gear_controller.get_state() == LandingGearController.GearState.DEPLOYED and (is_gear_hit or not is_body_hit):
+				var event_landing_pad: LandingPad = gear_landing_pad
+				if event_landing_pad == null:
+					event_landing_pad = collided_landing_pad
+
+				if event_landing_pad != null and not _landing_gear_controller.can_land():
+					velocity = _old_velocity.bounce(collision.get_normal()) * _bounce_factor
 
 		# # Calculate bounce based on collision normal and pre-move velocity
 		# var bounce_direction = collision.get_normal()
@@ -193,16 +252,52 @@ func _handle_taxi_collisions(delta: float) -> void:
 		# 	# Only apply bounce if the collision speed is above the minimum threshold
 		# 	if pre_move_velocity.length() > _landing_gear_controller.get_max_landing_speed():
 		# 		print("Too fast for landing, applying bounce")
-		# 		velocity = pre_move_velocity.bounce(bounce_direction) * _bounce_factor
+		# 		velocity = _old_velocity.bounce(bounce_direction) * _bounce_factor
 		# 	else:
 		# 		print("Safe landing, no bounce applied")
 		# else:
-		# 	velocity = pre_move_velocity.bounce(bounce_direction) * _bounce_factor
+		# 	velocity = _old_velocity.bounce(bounce_direction) * _bounce_factor
+
+
+func _process_stable_landing(delta: float) -> void:
+	if _is_landed:
+		return
+	if _landing_gear_controller.get_state() != LandingGearController.GearState.DEPLOYED:
+		return
+
+	var gear_landing_pad: LandingPad = _landing_gear_controller.get_current_landing_pad()
+	if gear_landing_pad == null:
+		return
+
+	if _landing_gear_controller.can_land() and _landing_gear_controller.landing_complete(delta):
+		_is_landed = true
+		EventHub.emit_taxi_landed(gear_landing_pad, global_position.x)
+
+
+func _resolve_landing_pad_from_collider(collider: Node) -> LandingPad:
+	if collider == null:
+		return null
+	if collider is LandingPad:
+		return collider as LandingPad
+	if collider is WaitingZone:
+		return (collider as WaitingZone).get_landing_pad()
+
+	var current: Node = collider.get_parent()
+	while current != null:
+		if current is LandingPad:
+			return current as LandingPad
+		current = current.get_parent()
+
+	return null
 
 
 # Takes in the local_shape of current collision and return true if the collision is with the taxi body, which should cause damage, and false if it's a collision with the landing gear, which should not cause damage.
 func _is_body_collision(local_shape) -> bool:
 	return local_shape == _body_collision
+
+
+func _is_gear_collision(local_shape) -> bool:
+	return local_shape == _mono_foot_collision
 
 
 # Calculate damage value based on collision speed and returns the damage value.

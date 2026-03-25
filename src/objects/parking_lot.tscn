@@ -10,7 +10,7 @@ size = Vector2(96, 8)
 font_size = 8
 font_color = Color(0, 0, 0, 1)
 
-[node name="ParkingLot" type="StaticBody2D" unique_id=1215425304 groups=["landing_pads"]]
+[node name="ParkingLot" type="StaticBody2D" unique_id=1215425304 groups=["landing_pads", "parking_lots"]]
 collision_layer = 64
 collision_mask = 0
 script = ExtResource("1_0anca")

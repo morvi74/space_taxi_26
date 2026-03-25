@@ -7,11 +7,11 @@ extends Node2D
 @export var show_graph_in_game: bool = true
 @export var graph_color: Color = Color(1.0, 1.0, 0.2, 0.9)
 @export var graph_width: float = 2.0
-@export_flags_2d_physics var blocking_mask: int = (1 << 1) | (1 << 2) | (1 << 5)
+@export_flags_2d_physics var blocking_mask: int = (1 << 1) | (1 << 2) | (1 << 5) | (1 << 6)
 @export var auto_rebuild_in_editor: bool = true
 
 var connections: Dictionary = {} # Dictionary<JunctionPoint2D, Array<JunctionPoint2D>>
-var _last_dragged: JunctionPoint2D = null
+#var _last_dragged: JunctionPoint2D = null
 
 func _enter_tree() -> void:
 	if not child_exiting_tree.is_connected(_on_child_exiting_tree):
@@ -107,7 +107,7 @@ func _has_clear_line(
 	query.collide_with_areas = true
 	query.collide_with_bodies = true
 
-	# Junctions selbst ignorieren.
+	# Ignore the junction points themselves.
 	var exclude_rids: Array[RID] = []
 	if a.get_canvas_item().is_valid():
 		exclude_rids.append(a.get_canvas_item())
@@ -125,7 +125,7 @@ func _draw() -> void:
 	if not draw_runtime and not draw_editor:
 		return
 
-	# Linien
+	# Draw graph lines.
 	for from_junction_variant: Variant in connections.keys():
 		var a: JunctionPoint2D = from_junction_variant as JunctionPoint2D
 		if a == null or not is_instance_valid(a):
@@ -154,7 +154,7 @@ func _draw() -> void:
 	# 			1.0
 	# 		)
 			
-	# Punkte im Game zusätzlich hier zeichnen, falls gewünscht.
+	# Optionally draw points in-game as well.
 	if not Engine.is_editor_hint() and show_points_in_game:
 		for junction: JunctionPoint2D in get_junctions():
 			draw_circle(

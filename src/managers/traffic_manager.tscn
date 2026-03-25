@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://bfpipnk5slpt5"]
+
+[ext_resource type="Script" uid="uid://vis6by7tfjt0" path="res://src/managers/traffic_manager.gd" id="1_hh7kp"]
+
+[node name="TrafficManager" type="Node" unique_id=319391525]
+script = ExtResource("1_hh7kp")
+
+[node name="SpawnTimer" type="Timer" parent="." unique_id=1723937378]
+wait_time = 1.25
+
+[node name="DespawnTimer" type="Timer" parent="." unique_id=763846879]
+wait_time = 0.6
+
+[connection signal="timeout" from="SpawnTimer" to="." method="_on_spawn_timer_timeout"]
+[connection signal="timeout" from="DespawnTimer" to="." method="_on_despawn_timer_timeout"]

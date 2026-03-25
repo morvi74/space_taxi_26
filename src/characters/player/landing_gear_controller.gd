@@ -21,7 +21,9 @@ var _deploy_speed: float = 60.0
 @export var _max_landing_speed: float = 80.0
 func get_max_landing_speed() -> float:
 	return _max_landing_speed
-@export var _landing_stable_time: float = 0.15
+@export var _max_settle_vertical_speed: float = 2.0
+@export var _max_settle_vertical_speed_delta: float = 0.8
+@export var _landing_stable_time: float = 0.2
 
 var _health: int = 0
 var _state: GearState = GearState.RETRACTED
@@ -29,6 +31,8 @@ func get_state() -> GearState:
 	return _state
 var _current_gear_y: float = 0.0
 var _stable_timer: float = 0.0
+var _last_vertical_speed: float = 0.0
+var _has_last_vertical_speed: bool = false
 
 # Reference to the Taxi node
 var _taxi: Taxi
@@ -67,6 +71,9 @@ func _ready() -> void:
 	_health = _max_health
 	EventHub.emit_gear_health_changed(_health)  # Emit initial health value to UI
 	_current_gear_y = _gear_retracted_y
+	if _taxi != null:
+		_last_vertical_speed = _taxi.velocity.y
+		_has_last_vertical_speed = true
 	#_apply_gear_positions()
 
 # Toggles the landing gear between deployed and retracted states, initiating the appropriate deployment or retraction process based on the current state of the gear. This function is typically called in response to player input, allowing the player to control the landing gear during flight and landing maneuvers.
@@ -86,9 +93,26 @@ func _physics_process(delta: float) -> void:
 	if _state in [GearState.DEPLOYING, GearState.RETRACTING]:
 		_update_gear(delta)
 	if _center_ray.is_colliding():
-		_landing_pad_below = _center_ray.get_collider() as LandingPad
+		_landing_pad_below = _resolve_landing_pad_from_collider(_center_ray.get_collider() as Node)
 	else:
 		_landing_pad_below = null
+
+
+func _resolve_landing_pad_from_collider(collider: Node) -> LandingPad:
+	if collider == null:
+		return null
+	if collider is LandingPad:
+		return collider as LandingPad
+	if collider is WaitingZone:
+		return (collider as WaitingZone).get_landing_pad()
+
+	var current: Node = collider.get_parent()
+	while current != null:
+		if current is LandingPad:
+			return current as LandingPad
+		current = current.get_parent()
+
+	return null
 
 # Updates the landing gear position based on the current _state and the deploy speed
 func _update_gear(delta: float) -> void:
@@ -166,7 +190,7 @@ func can_land() -> bool:
 
 # Updates the landing process, checking if the landing conditions are met and if the landing has been stable for the required time to be considered successful
 func landing_complete(delta: float) -> bool:
-	if can_land():
+	if can_land() and _is_vertical_motion_settled():
 		_stable_timer += delta
 
 		if _stable_timer >= _landing_stable_time:
@@ -175,6 +199,24 @@ func landing_complete(delta: float) -> bool:
 		_stable_timer = 0.0
 
 	return false
+
+
+func _is_vertical_motion_settled() -> bool:
+	if _taxi == null:
+		return false
+
+	var vy: float = _taxi.velocity.y
+	var speed_ok: bool = absf(vy) <= _max_settle_vertical_speed
+
+	if not _has_last_vertical_speed:
+		_last_vertical_speed = vy
+		_has_last_vertical_speed = true
+		return false
+
+	var delta_ok: bool = absf(vy - _last_vertical_speed) <= _max_settle_vertical_speed_delta
+	_last_vertical_speed = vy
+
+	return speed_ok and delta_ok
 
 
 # Applies damage to the landing gear, reducing its _health and potentially breaking it if the _health drops to zero or below

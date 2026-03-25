@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bdnmblqajs1hx" path="res://src/objects/waiting_zone_left.tscn" id="3_d4gbn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xet2e"]
-size = Vector2(96, 8)
+size = Vector2(128, 8)
 
 [sub_resource type="LabelSettings" id="LabelSettings_xet2e"]
 font_size = 8
@@ -20,6 +20,7 @@ script = ExtResource("1_xet2e")
 texture = ExtResource("2_xet2e")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=510697553]
+position = Vector2(-16, 0)
 shape = SubResource("RectangleShape2D_xet2e")
 
 [node name="IdLabel" type="Label" parent="." unique_id=76910776]
@@ -31,16 +32,6 @@ text = "00"
 label_settings = SubResource("LabelSettings_xet2e")
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="LeftRay" type="RayCast2D" parent="." unique_id=1427987703]
-position = Vector2(-45, 0)
-target_position = Vector2(-8, 0)
-collision_mask = 32
-
-[node name="RightRay" type="RayCast2D" parent="." unique_id=1409937831]
-position = Vector2(45, 0)
-target_position = Vector2(8, 0)
-collision_mask = 32
 
 [node name="WaitingZone" parent="." unique_id=1980633811 instance=ExtResource("3_d4gbn")]
 position = Vector2(-64, 0)

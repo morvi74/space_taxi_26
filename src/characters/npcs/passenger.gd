@@ -5,7 +5,7 @@ class_name Passenger
 
 
 @onready var _anim_player: AnimationPlayer = $AnimationPlayer
-@onready var _sprite: Sprite2D = $Sprite2D
+#@onready var _sprite: Sprite2D = $Sprite2D
 
 @export var _walk_speed: float = 50.0
 
@@ -38,17 +38,30 @@ var _state: State
 var _moving_destination: Vector2 = Vector2.INF
 var _direction: Vector2 = Vector2.ZERO
 var _passenger_parent_node: Node2D = null
+func get_passenger_parent_node() -> Node2D:
+	return _passenger_parent_node
+func set_passenger_parent_node(node: Node2D) -> void:
+	_passenger_parent_node = node
 
+var _transport_distance: float = 0.0
+func get_transport_distance() -> float:
+	return _transport_distance
 
 
 # func _ready() -> void:
 # 	EventHub.taxi_landed.connect(_on_taxi_landed)
 
-func activate() -> void:	
+func activate() -> void:		
 	_state = State.SPAWNING
 	global_position = _start_landing_pad.get_waiting_zone().get_waiting_position()
 	_anim_player.play("become_visible")
-
+	if _start_landing_pad == null:
+		printerr("Passenger ", name, ": start landing pad is null. This should not happen if the level is set up correctly.")
+	if _destination_landing_pad == null:
+		printerr("Passenger ", name, ": destination landing pad is null. This should not happen if the level is set up correctly.")
+	if _start_landing_pad != null and _destination_landing_pad != null:
+		_transport_distance = ManagerHub.get_traffic_manager().get_distance_between_landing_pads(_start_landing_pad, _destination_landing_pad)
+	
 
 func _physics_process(delta: float) -> void:
 	match _state:
@@ -121,6 +134,7 @@ func exit_taxi() -> void:
 	if _state == State.IN_TAXI:
 		_state = State.EXIT_TAXI
 		_anim_player.play("become_visible")
+		reparent(_passenger_parent_node)
 
 
 # func _on_taxi_landed(landing_pad: LandingPad, taxi_pos_x: float) -> void:

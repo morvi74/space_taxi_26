@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://dnh4km2s01swb"]
+
+[ext_resource type="Script" uid="uid://bsdjd264e7oql" path="res://src/levels/no_entry.gd" id="1_xho5a"]
+
+[node name="NoEntry" type="Node2D" unique_id=2075297565]
+script = ExtResource("1_xho5a")
+
+[node name="PointA" type="Marker2D" parent="." unique_id=932049842]
+
+[node name="PointB" type="Marker2D" parent="." unique_id=817696674]
+position = Vector2(64, 64)

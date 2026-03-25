@@ -16,6 +16,7 @@ var stylebox_hp: StyleBoxFlat
 @onready var column_add: Button = %AddColumn
 @onready var warning_sign: Button = %WarningSign
 @onready var warn_about_empty_deletion: CheckBox = %WarnAboutEmptyDeletion
+@onready var width_spin_box: SpinBox = %WidthSpinBox
 @onready var confirm_not_empty: ConfirmationDialog = %ConfirmNotEmpty
 @onready var confirm_empty: ConfirmationDialog = %ConfirmEmpty
 @onready var task_destination: OptionButton = %TaskDestination
@@ -42,28 +43,28 @@ func _ready() -> void:
 	ctx.settings.changed.connect(__settings_changed)
 
 	warn_about_empty_deletion.toggled.connect(__apply_settings_changes)
+	width_spin_box.value_changed.connect(__apply_settings_changes)
 
 
 func _notification(what) -> void:
-	match(what):
-		NOTIFICATION_THEME_CHANGED:
-			stylebox_n = get_theme_stylebox(&"normal", &"Button").duplicate()
-			stylebox_n.set_border_width_all(1)
-			stylebox_n.border_color = Color8(32, 32, 32, 255)
+	if what == NOTIFICATION_THEME_CHANGED and not is_part_of_edited_scene():
+		stylebox_n = get_theme_stylebox(&"normal", &"Button").duplicate()
+		stylebox_n.set_border_width_all(1)
+		stylebox_n.border_color = Color8(32, 32, 32, 255)
 
-			stylebox_hp = get_theme_stylebox(&"read_only", &"LineEdit").duplicate()
-			stylebox_hp.set_border_width_all(1)
-			stylebox_hp.border_color = Color8(32, 32, 32, 128)
+		stylebox_hp = get_theme_stylebox(&"read_only", &"LineEdit").duplicate()
+		stylebox_hp.set_border_width_all(1)
+		stylebox_hp.border_color = Color8(32, 32, 32, 128)
 
-			if is_instance_valid(column_add):
-				column_add.get_child(0).get_child(0).texture = get_theme_icon(&"Add", &"EditorIcons")
-				column_add.add_theme_stylebox_override(&"normal", stylebox_n)
-				column_add.add_theme_stylebox_override(&"hover", stylebox_hp)
-				column_add.add_theme_stylebox_override(&"pressed", stylebox_hp)
-			if is_instance_valid(warning_sign):
-				warning_sign.icon = get_theme_icon(&"NodeWarning", &"EditorIcons")
-			if is_instance_valid(panel_container):
-				panel_container.add_theme_stylebox_override(&"panel", get_theme_stylebox(&"panel", &"Tree"))
+		if is_instance_valid(column_add):
+			column_add.get_child(0).get_child(0).texture = get_theme_icon(&"Add", &"EditorIcons")
+			column_add.add_theme_stylebox_override(&"normal", stylebox_n)
+			column_add.add_theme_stylebox_override(&"hover", stylebox_hp)
+			column_add.add_theme_stylebox_override(&"pressed", stylebox_hp)
+		if is_instance_valid(warning_sign):
+			warning_sign.icon = get_theme_icon(&"NodeWarning", &"EditorIcons")
+		if is_instance_valid(panel_container):
+			panel_container.add_theme_stylebox_override(&"panel", get_theme_stylebox(&"panel", &"Panel"))
 
 
 func update() -> void:
@@ -193,10 +194,12 @@ func __remove_stage(uuid: String) -> void:
 func __settings_changed() -> void:
 	var ctx: __EditContext = __Singletons.instance_of(__EditContext, self)
 	warn_about_empty_deletion.button_pressed = ctx.settings.warn_about_empty_deletion
+	width_spin_box.value = ctx.settings.stages_width
 
 
 func __apply_settings_changes(warn: bool) -> void:
 	var ctx: __EditContext = __Singletons.instance_of(__EditContext, self)
 	ctx.settings.changed.disconnect(__settings_changed)
 	ctx.settings.warn_about_empty_deletion = warn
+	ctx.settings.stages_width = int(width_spin_box.value)
 	ctx.settings.changed.connect(__settings_changed)

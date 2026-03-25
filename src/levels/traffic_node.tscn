@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://bbbxi7ohc01bf"]
+
+[ext_resource type="Script" uid="uid://lra030uos32o" path="res://src/levels/traffic_node.gd" id="1_v23nf"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_v23nf"]
+
+[node name="TrafficNode" type="Marker2D" unique_id=748748020 groups=["traffic_nodes"]]
+script = ExtResource("1_v23nf")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=839212165]
+collision_layer = 128
+collision_mask = 68
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=1541889679]
+shape = SubResource("CircleShape2D_v23nf")
+debug_color = Color(0.8047084, 0.38161725, 0.45357037, 0.41960785)
