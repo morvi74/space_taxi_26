@@ -11,21 +11,14 @@
             "id": "a14ffe23dd3a0c94",
             "type": "leaf",
             "state": {
-              "type": "kanban",
+              "type": "markdown",
               "state": {
-                "file": "03_Project_Management/Feature Plan.md",
-                "kanbanViewState": {
-                  "kanban-plugin": "board",
-                  "list-collapse": [
-                    false,
-                    false,
-                    false,
-                    false
-                  ]
-                }
+                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-trello",
-              "title": "Feature Plan"
+              "icon": "lucide-file",
+              "title": "Fahrprofile"
             }
           }
         ]
@@ -101,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "03_Project_Management/Feature Plan.md",
+                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -111,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Rückverweise auf Feature Plan"
+              "title": "Rückverweise auf Fahrprofile"
             }
           },
           {
@@ -120,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "03_Project_Management/Feature Plan.md",
+                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Ausgehende Links von Feature Plan öffnen"
+              "title": "Ausgehende Links von Fahrprofile öffnen"
             }
           },
           {
@@ -163,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "03_Project_Management/Feature Plan.md",
+                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Gliederung von Feature Plan"
+              "title": "Gliederung von Fahrprofile"
             }
           }
         ]
@@ -193,8 +186,10 @@
   },
   "active": "a14ffe23dd3a0c94",
   "lastOpenFiles": [
-    "Willkommen.md",
     "03_Project_Management/Feature Plan.md",
+    "01_Game_Design/NPC_Cars/Fahrprofile.md",
+    "01_Game_Design/NPC_Cars",
+    "Willkommen.md",
     "attachements",
     "03_Project_Management",
     "02_Development",
