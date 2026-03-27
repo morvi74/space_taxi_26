@@ -8,8 +8,4 @@ script = ExtResource("1_hh7kp")
 [node name="SpawnTimer" type="Timer" parent="." unique_id=1723937378]
 wait_time = 1.25
 
-[node name="DespawnTimer" type="Timer" parent="." unique_id=763846879]
-wait_time = 0.6
-
 [connection signal="timeout" from="SpawnTimer" to="." method="_on_spawn_timer_timeout"]
-[connection signal="timeout" from="DespawnTimer" to="." method="_on_despawn_timer_timeout"]

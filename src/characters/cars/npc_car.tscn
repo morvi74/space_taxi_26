@@ -2,10 +2,14 @@
 
 [ext_resource type="Texture2D" uid="uid://cje1elnumn8xe" path="res://assets/car.png" id="1_623t5"]
 [ext_resource type="Script" uid="uid://crf7hjp1aq7p4" path="res://src/characters/cars/npc_car.gd" id="1_igko8"]
+[ext_resource type="Texture2D" uid="uid://brk1umyh4rtum" path="res://assets/landing_gear_v2.png" id="3_umeek"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_igko8"]
 friction = 0.0
 bounce = 0.4
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_umeek"]
+size = Vector2(48, 10)
 
 [node name="NPCCar" type="RigidBody2D" unique_id=2017087938]
 collision_layer = 16
@@ -18,5 +22,32 @@ script = ExtResource("1_igko8")
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=325881841]
 texture = ExtResource("1_623t5")
 
+[node name="GearCollision" type="CollisionShape2D" parent="." unique_id=1719046323]
+position = Vector2(0, 7)
+shape = SubResource("RectangleShape2D_umeek")
+disabled = true
+
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=439544856]
 polygon = PackedVector2Array(-32, 16, -31, 0, -16, -3, -8, -11, 24, -11, 32, -5, 32, 16)
+
+[node name="LandingGearRoot" type="Node2D" parent="." unique_id=672422137]
+position = Vector2(0, 7)
+
+[node name="GearSprite" type="Sprite2D" parent="LandingGearRoot" unique_id=2037542873]
+z_index = -1
+texture = ExtResource("3_umeek")
+
+[node name="FootLeftRay" type="RayCast2D" parent="LandingGearRoot" unique_id=64859256]
+position = Vector2(-19, 4)
+target_position = Vector2(0, 5)
+collision_mask = 4
+
+[node name="FootRightRay" type="RayCast2D" parent="LandingGearRoot" unique_id=1423826891]
+position = Vector2(19, 4)
+target_position = Vector2(0, 5)
+collision_mask = 4
+
+[node name="CenterRay" type="RayCast2D" parent="LandingGearRoot" unique_id=1213356102]
+position = Vector2(0, 4)
+target_position = Vector2(0, 32)
+collision_mask = 4

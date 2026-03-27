@@ -22,6 +22,7 @@ script = ExtResource("5_wn2xd")
 [node name="main" type="Node2D" unique_id=390309636]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1751361204]
+visible = false
 
 [node name="MarginContainer" type="MarginContainer" parent="CanvasLayer" unique_id=1749924769]
 offset_right = 40.0
@@ -35,6 +36,7 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 
 [node name="BG" type="Sprite2D" parent="." unique_id=1347578410]
+visible = false
 z_index = -10
 position = Vector2(673.00006, 114)
 scale = Vector2(15.65625, 14.34375)
@@ -87,7 +89,7 @@ position = Vector2(530, -48)
 
 [node name="PhantomCamera2D" type="Node2D" parent="." unique_id=1730872812 node_paths=PackedStringArray("follow_target")]
 top_level = true
-position = Vector2(384, 175)
+position = Vector2(466, 202)
 script = ExtResource("4_w1vba")
 follow_mode = 2
 follow_target = NodePath("../Taxi")
@@ -98,7 +100,7 @@ metadata/_custom_type_script = "uid://bhexx6mj1xv3q"
 [node name="Camera2D" type="Camera2D" parent="." unique_id=980237368]
 physics_interpolation_mode = 1
 top_level = true
-position = Vector2(384, 175)
+position = Vector2(466, 202)
 zoom = Vector2(0.25, 0.25)
 
 [node name="PhantomCameraHost" type="Node" parent="Camera2D" unique_id=269426651]
@@ -109,7 +111,7 @@ interpolation_mode = 2
 metadata/_custom_type_script = "uid://bd046eokvcnu2"
 
 [node name="Taxi" parent="." unique_id=151031600 instance=ExtResource("7_wn2xd")]
-position = Vector2(384, 175)
+position = Vector2(466, 202)
 
 [node name="LevelManager" parent="." unique_id=1225576493 node_paths=PackedStringArray("_passenger_root_node") instance=ExtResource("13_2q5fg")]
 _passenger_root_node = NodePath("../Passengers")
@@ -117,9 +119,8 @@ _passenger_root_node = NodePath("../Passengers")
 [node name="TrafficManager" parent="." unique_id=710567120 node_paths=PackedStringArray("traffic_network", "npc_root_node") instance=ExtResource("15_tmgr0")]
 traffic_network = NodePath("../TrafficNetwork")
 npc_car_scene = ExtResource("2_rn2v6")
-npc_root_node = NodePath("..")
-min_spawn_to_initial_destination_distance = 800.0
-debug_npc_sensor_overlay = true
+npc_root_node = NodePath("../CarsRoot")
+max_active_cars = 3
 
 [node name="TrafficNetwork" type="Node2D" parent="." unique_id=1757679156]
 script = ExtResource("13_76muk")
@@ -127,7 +128,12 @@ auto_connect_radius = 200.0
 draw_connections_on_start = true
 
 [node name="TrafficNode" parent="TrafficNetwork" unique_id=748748020 instance=ExtResource("14_2q5fg")]
-position = Vector2(1476, -138)
+position = Vector2(1488, -213)
+is_spawn_node = true
+can_be_destination = true
+
+[node name="TrafficNode76" parent="TrafficNetwork" unique_id=455553792 instance=ExtResource("14_2q5fg")]
+position = Vector2(1488, -86)
 is_spawn_node = true
 can_be_destination = true
 
@@ -142,7 +148,7 @@ is_spawn_node = true
 can_be_destination = true
 
 [node name="TrafficNode2" parent="TrafficNetwork" unique_id=564474948 instance=ExtResource("14_2q5fg")]
-position = Vector2(-244, -122)
+position = Vector2(-235, -213)
 is_spawn_node = true
 can_be_destination = true
 
@@ -151,22 +157,39 @@ position = Vector2(-235, 155)
 is_spawn_node = true
 can_be_destination = true
 
+[node name="TrafficNode78" parent="TrafficNetwork" unique_id=294093250 instance=ExtResource("14_2q5fg")]
+position = Vector2(-235, -44)
+is_spawn_node = true
+can_be_destination = true
+
 [node name="TrafficNode7" parent="TrafficNetwork" unique_id=1796180181 instance=ExtResource("14_2q5fg")]
-position = Vector2(-264, 367)
+position = Vector2(-235, 320)
 is_spawn_node = true
 can_be_destination = true
 
 [node name="TrafficNode3" parent="TrafficNetwork" unique_id=1435014510 instance=ExtResource("14_2q5fg")]
 position = Vector2(1282, -148)
 
+[node name="TrafficNode65" parent="TrafficNetwork" unique_id=1726074116 instance=ExtResource("14_2q5fg")]
+position = Vector2(1347, -74)
+
 [node name="TrafficNode8" parent="TrafficNetwork" unique_id=1251697345 instance=ExtResource("14_2q5fg")]
 position = Vector2(1307, 53)
 
 [node name="TrafficNode9" parent="TrafficNetwork" unique_id=364860476 instance=ExtResource("14_2q5fg")]
-position = Vector2(1319, 233)
+position = Vector2(1316, 233)
+
+[node name="TrafficNode77" parent="TrafficNetwork" unique_id=2125751350 instance=ExtResource("14_2q5fg")]
+position = Vector2(1404, 304)
+
+[node name="TrafficNode55" parent="TrafficNetwork" unique_id=66585258 instance=ExtResource("14_2q5fg")]
+position = Vector2(1404, 142)
 
 [node name="TrafficNode10" parent="TrafficNetwork" unique_id=1085359515 instance=ExtResource("14_2q5fg")]
 position = Vector2(1127, 247)
+
+[node name="TrafficNode72" parent="TrafficNetwork" unique_id=1826376095 instance=ExtResource("14_2q5fg")]
+position = Vector2(1220, 350)
 
 [node name="TrafficNode18" parent="TrafficNetwork" unique_id=1458829600 instance=ExtResource("14_2q5fg")]
 position = Vector2(1154, -63)
@@ -176,9 +199,6 @@ position = Vector2(964, -74)
 
 [node name="TrafficNode20" parent="TrafficNetwork" unique_id=708268023 instance=ExtResource("14_2q5fg")]
 position = Vector2(843, -86)
-
-[node name="TrafficNode55" parent="TrafficNetwork" unique_id=1692665846 instance=ExtResource("14_2q5fg")]
-position = Vector2(728, -108)
 
 [node name="TrafficNode21" parent="TrafficNetwork" unique_id=1127893274 instance=ExtResource("14_2q5fg")]
 position = Vector2(670, -162)
@@ -200,19 +220,55 @@ position = Vector2(353, -162)
 position = Vector2(203, -135)
 
 [node name="TrafficNode26" parent="TrafficNetwork" unique_id=2016033227 instance=ExtResource("14_2q5fg")]
-position = Vector2(37, -122)
+position = Vector2(68, -111)
 
 [node name="TrafficNode27" parent="TrafficNetwork" unique_id=1565818691 instance=ExtResource("14_2q5fg")]
 position = Vector2(-120, -130)
 
+[node name="TrafficNode61" parent="TrafficNetwork" unique_id=1071380037 instance=ExtResource("14_2q5fg")]
+position = Vector2(1335, -266)
+
+[node name="TrafficNode62" parent="TrafficNetwork" unique_id=2093561045 instance=ExtResource("14_2q5fg")]
+position = Vector2(1182, -240)
+
+[node name="TrafficNode63" parent="TrafficNetwork" unique_id=81176109 instance=ExtResource("14_2q5fg")]
+position = Vector2(1044, -200)
+
+[node name="TrafficNode64" parent="TrafficNetwork" unique_id=797320500 instance=ExtResource("14_2q5fg")]
+position = Vector2(892, -253)
+
+[node name="TrafficNode66" parent="TrafficNetwork" unique_id=1661227655 instance=ExtResource("14_2q5fg")]
+position = Vector2(723, -280)
+
+[node name="TrafficNode67" parent="TrafficNetwork" unique_id=1019026378 instance=ExtResource("14_2q5fg")]
+position = Vector2(562, -283)
+
+[node name="TrafficNode68" parent="TrafficNetwork" unique_id=1874547318 instance=ExtResource("14_2q5fg")]
+position = Vector2(406, -280)
+
+[node name="TrafficNode69" parent="TrafficNetwork" unique_id=1988899160 instance=ExtResource("14_2q5fg")]
+position = Vector2(256, -253)
+
+[node name="TrafficNode70" parent="TrafficNetwork" unique_id=603946707 instance=ExtResource("14_2q5fg")]
+position = Vector2(90, -240)
+
+[node name="TrafficNode71" parent="TrafficNetwork" unique_id=1349874249 instance=ExtResource("14_2q5fg")]
+position = Vector2(-67, -248)
+
 [node name="TrafficNode28" parent="TrafficNetwork" unique_id=763910321 instance=ExtResource("14_2q5fg")]
 position = Vector2(-132, 0)
+
+[node name="TrafficNode74" parent="TrafficNetwork" unique_id=912752856 instance=ExtResource("14_2q5fg")]
+position = Vector2(-37, -59)
 
 [node name="TrafficNode29" parent="TrafficNetwork" unique_id=1564425410 instance=ExtResource("14_2q5fg")]
 position = Vector2(-97, 142)
 
 [node name="TrafficNode30" parent="TrafficNetwork" unique_id=181601245 instance=ExtResource("14_2q5fg")]
 position = Vector2(-105, 275)
+
+[node name="TrafficNode73" parent="TrafficNetwork" unique_id=1925633682 instance=ExtResource("14_2q5fg")]
+position = Vector2(0, 320)
 
 [node name="TrafficNode31" parent="TrafficNetwork" unique_id=1217079938 instance=ExtResource("14_2q5fg")]
 position = Vector2(-112, 395)
@@ -234,6 +290,9 @@ position = Vector2(232, -40)
 
 [node name="TrafficNode37" parent="TrafficNetwork" unique_id=903730367 instance=ExtResource("14_2q5fg")]
 position = Vector2(344, 40)
+
+[node name="TrafficNode75" parent="TrafficNetwork" unique_id=943761529 instance=ExtResource("14_2q5fg")]
+position = Vector2(394, -74)
 
 [node name="TrafficNode38" parent="TrafficNetwork" unique_id=2076776731 instance=ExtResource("14_2q5fg")]
 position = Vector2(476, 83)
@@ -280,6 +339,9 @@ position = Vector2(252, 586)
 [node name="TrafficNode48" parent="TrafficNetwork" unique_id=1277844349 instance=ExtResource("14_2q5fg")]
 position = Vector2(646, 402)
 
+[node name="TrafficNode60" parent="TrafficNetwork" unique_id=2062998759 instance=ExtResource("14_2q5fg")]
+position = Vector2(650, 512)
+
 [node name="TrafficNode49" parent="TrafficNetwork" unique_id=994127484 instance=ExtResource("14_2q5fg")]
 position = Vector2(779, 466)
 
@@ -300,30 +362,20 @@ position = Vector2(832, 193)
 
 [node name="TrafficNode13" parent="TrafficNetwork" unique_id=1300033970 instance=ExtResource("14_2q5fg")]
 position = Vector2(812, 299)
-can_be_destination = true
-no_despawn = true
 
 [node name="TrafficNode53" parent="TrafficNetwork" unique_id=400009355 instance=ExtResource("14_2q5fg")]
 position = Vector2(949, 37)
-can_be_destination = true
-no_despawn = true
 
 [node name="TrafficNode14" parent="TrafficNetwork" unique_id=1642459347 instance=ExtResource("14_2q5fg")]
 position = Vector2(532, -59)
-can_be_destination = true
-no_despawn = true
 
 [node name="TrafficNode15" parent="TrafficNetwork" unique_id=684924169 instance=ExtResource("14_2q5fg")]
 position = Vector2(85, 19)
-can_be_destination = true
-no_despawn = true
 
 [node name="TrafficNode16" parent="TrafficNetwork" unique_id=1581053776 instance=ExtResource("14_2q5fg")]
 position = Vector2(388, 216)
-can_be_destination = true
-no_despawn = true
 
 [node name="TrafficNode17" parent="TrafficNetwork" unique_id=982351109 instance=ExtResource("14_2q5fg")]
 position = Vector2(133, 301)
-can_be_destination = true
-no_despawn = true
+
+[node name="CarsRoot" type="Node2D" parent="." unique_id=930054873]
