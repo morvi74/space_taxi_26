@@ -12,6 +12,7 @@ const NPCCarType = preload("res://src/characters/cars/npc_car.gd")
 @export var spawn_interval: float = 10.0
 @export var max_active_cars: int = 6
 @export var min_spawn_to_initial_destination_distance: float = 1200.0
+@export var despawn_min_distance_to_player: float = 1800.0
 @export var debug_npc_sensor_overlay: bool = false
 @export var debug_npc_sensor_line_width: float = 2.0
 
@@ -221,6 +222,41 @@ func release_destination_for_car(car: NPCCarType) -> void:
 	if pending_node != null:
 		_release_node_reservation(pending_node)
 		_pending_release_destination_by_car_id.erase(car_id)
+
+
+## Returns true if the car may despawn at its current reserved destination node.
+func should_despawn_car_at_destination(car: NPCCarType) -> bool:
+	if car == null:
+		return false
+	if despawn_min_distance_to_player <= 0.0:
+		return false
+
+	var destination_node: TrafficNodeType = get_reserved_destination_for_car(car)
+	if destination_node == null:
+		return false
+	if not destination_node.is_spawn_node:
+		return false
+	if destination_node.no_despawn:
+		return false
+	if destination_node.get_parking_lot() != null:
+		return false
+	if destination_node.get_landing_pad() != null:
+		return false
+
+	var player_taxi: Node2D = GameData.get_taxi() as Node2D
+	if player_taxi == null:
+		return false
+
+	var distance_to_player: float = destination_node.global_position.distance_to(player_taxi.global_position)
+	return distance_to_player >= despawn_min_distance_to_player
+
+
+## Despawns a car and releases all destination reservations held by it.
+func despawn_car(car: NPCCarType) -> void:
+	if car == null or not is_instance_valid(car):
+		return
+	release_destination_for_car(car)
+	car.queue_free()
 
 
 ## Returns the closest traffic node to a world position.

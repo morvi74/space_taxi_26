@@ -15,7 +15,7 @@ font_size = 10
 font_color = Color(0, 0, 0, 1)
 
 [node name="Taxi" type="CharacterBody2D" unique_id=151031600 node_paths=PackedStringArray("_landing_gear_controller", "_mono_foot_collision")]
-collision_mask = 62
+collision_mask = 126
 script = ExtResource("1_8rb3c")
 _landing_gear_controller = NodePath("Controllers/LandingGearController")
 _mono_foot_collision = NodePath("MonoGearCollision")
