@@ -1,0 +1,203 @@
+{
+  "main": {
+    "id": "46cca91dd0da3651",
+    "type": "split",
+    "children": [
+      {
+        "id": "c5f7fd7a5f60cfa9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a14ffe23dd3a0c94",
+            "type": "leaf",
+            "state": {
+              "type": "kanban",
+              "state": {
+                "file": "03_Project_Management/Feature Plan.md",
+                "kanbanViewState": {
+                  "kanban-plugin": "board",
+                  "list-collapse": [
+                    false,
+                    false,
+                    false,
+                    false
+                  ]
+                }
+              },
+              "icon": "lucide-trello",
+              "title": "Feature Plan"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "569fec6deafdc3d4",
+    "type": "split",
+    "children": [
+      {
+        "id": "ea5994a7210af020",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5afa1ed519f812b9",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Dateiexplorer"
+            }
+          },
+          {
+            "id": "4b603961bce3ddb2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Suchen"
+            }
+          },
+          {
+            "id": "2146f6d0bd1f3958",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Lesezeichen"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "30f469b79bdd668b",
+    "type": "split",
+    "children": [
+      {
+        "id": "afe5e6a2e9c85a05",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2dc7e2aecf7f31e4",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "03_Project_Management/Feature Plan.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Rückverweise auf Feature Plan"
+            }
+          },
+          {
+            "id": "087d118fe8c1cf25",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "03_Project_Management/Feature Plan.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Ausgehende Links von Feature Plan öffnen"
+            }
+          },
+          {
+            "id": "509c44b5839a0751",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "1e7c1678871cb311",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Alle Eigenschaften"
+            }
+          },
+          {
+            "id": "c95c95e84ab99997",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "03_Project_Management/Feature Plan.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Gliederung von Feature Plan"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Schnellauswahl öffnen": false,
+      "graph:Graph-Ansicht öffnen": false,
+      "canvas:Neuen Canvas erstellen": false,
+      "daily-notes:Heutige Notiz öffnen": false,
+      "templates:Vorlage einfügen": false,
+      "command-palette:Befehlspalette öffnen": false,
+      "bases:Neue Base erstellen": false,
+      "obsidian-kanban:Erstelle ein neues Board": false
+    }
+  },
+  "active": "a14ffe23dd3a0c94",
+  "lastOpenFiles": [
+    "Willkommen.md",
+    "03_Project_Management/Feature Plan.md",
+    "attachements",
+    "03_Project_Management",
+    "02_Development",
+    "01_Game_Design"
+  ]
+}
