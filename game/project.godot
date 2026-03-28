@@ -25,10 +25,9 @@ ManagerHub="*uid://bftdjre43pdyd"
 [display]
 
 window/size/viewport_width=640
-window/size/viewport_height=360
-window/size/window_width_override=2240
-window/size/window_height_override=1260
+window/size/mode=3
 window/stretch/mode="viewport"
+window/stretch/aspect="expand"
 window/stretch/scale_mode="integer"
 
 [editor_plugins]

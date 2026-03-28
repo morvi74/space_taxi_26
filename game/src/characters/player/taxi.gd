@@ -13,9 +13,9 @@ const _MAX_SPEED = 300.0
 ## Shared constant for damping.
 const _DAMPING = 0.6
 ## Shared constant for safe landing speed.
-const _SAFE_LANDING_SPEED = 100.0
+const _SAFE_LANDING_SPEED = 120.0
 ## Inspector setting for min bounce speed.
-@export var _min_bounce_speed = 70.0
+@export var _min_bounce_speed = 100.0
 
 ## Inspector setting for gravity.
 @export var _gravity = 130.0  # For planetary landings

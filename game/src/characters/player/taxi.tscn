@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://btahdcgsd77ds" path="res://assets/space_taxi.png" id="2_5lunm"]
 [ext_resource type="Texture2D" uid="uid://brk1umyh4rtum" path="res://assets/landing_gear_v2.png" id="3_5lunm"]
 [ext_resource type="Script" uid="uid://bj4orykkj7xac" path="res://src/characters/player/landing_gear_controller.gd" id="4_5lunm"]
+[ext_resource type="FontFile" uid="uid://bet2sc5oh0qi7" path="res://assets/ui/PixelFontBundle/AtariGames.ttf" id="5_t6yu5"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8u0x2"]
 size = Vector2(48, 10)
@@ -11,7 +12,7 @@ size = Vector2(48, 10)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vtusp"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_5lunm"]
-font_size = 10
+font = ExtResource("5_t6yu5")
 font_color = Color(0, 0, 0, 1)
 
 [node name="Taxi" type="CharacterBody2D" unique_id=151031600 node_paths=PackedStringArray("_landing_gear_controller", "_mono_foot_collision")]
@@ -74,10 +75,10 @@ _center_ray = NodePath("../../LandingGearRoot/CenterRay")
 [node name="TaxiStateController" type="Node" parent="Controllers" unique_id=1410710571]
 
 [node name="Label" type="Label" parent="." unique_id=1876483399]
-offset_left = -27.0
-offset_top = -11.0
-offset_right = 13.0
-offset_bottom = 12.0
+offset_left = -21.0
+offset_top = -8.0
+offset_right = 19.0
+offset_bottom = 15.0
 text = "TAXI"
 label_settings = SubResource("LabelSettings_5lunm")
 horizontal_alignment = 1
