@@ -11,10 +11,21 @@
             "id": "a14ffe23dd3a0c94",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
-              "icon": "lucide-file",
-              "title": "Neuer Tab"
+              "type": "kanban",
+              "state": {
+                "file": "03_Project_Management/Feature Plan.md",
+                "kanbanViewState": {
+                  "kanban-plugin": "board",
+                  "list-collapse": [
+                    false,
+                    false,
+                    false,
+                    false
+                  ]
+                }
+              },
+              "icon": "lucide-trello",
+              "title": "Feature Plan"
             }
           }
         ]
@@ -90,6 +101,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "03_Project_Management/Feature Plan.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -99,7 +111,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Rückverweise"
+              "title": "Rückverweise auf Feature Plan"
             }
           },
           {
@@ -108,11 +120,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "03_Project_Management/Feature Plan.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Ausgehende Links"
+              "title": "Ausgehende Links von Feature Plan öffnen"
             }
           },
           {
@@ -150,12 +163,13 @@
             "state": {
               "type": "outline",
               "state": {
+                "file": "03_Project_Management/Feature Plan.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Gliederung"
+              "title": "Gliederung von Feature Plan"
             }
           }
         ]
