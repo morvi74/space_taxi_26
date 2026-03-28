@@ -1,27 +1,51 @@
 extends Node2D
+## Builds and serves the runtime road graph used by NPC routing.
 class_name TrafficNetwork
 
+## Responsibilities:
+## - build A* connectivity from traffic nodes plus raycast constraints
+## - apply NoEntry/OneWay scene overrides after auto-connect
+## - provide reusable path and distance queries for traffic systems
+## Doc convention:
+## - First line states intent in one sentence.
+## - Optional Params line for non-trivial inputs.
+## - Optional Returns line for non-obvious outputs.
+## - Keep wording behavior-focused, not implementation-focused.
+
+## Emitted after graph construction and manual link overrides are complete.
 signal graph_built
 
+## Maximum distance for auto-connecting two traffic nodes.
 @export var auto_connect_radius: float = 300.0
+## Enables spawn-node registration debug output.
 @export var print_spawn_debug: bool = false
+## Draws graph edges for debugging when enabled.
 @export var draw_connections_on_start: bool = false
+## Minimum angle to horizontal required for edges touching landing-pad/parking nodes.
 @export var min_surface_connection_angle_degrees: float = 60.0
 
 # Layers are 1-based in Godot; this blocks graph links through layers 2, 3, and 7.
+## Physics layers that block automatic graph edge creation.
 const BLOCKING_COLLISION_MASK: int = (1 << 1) | (1 << 2) | (1 << 6)
 
+## A* graph backing all path queries.
 var astar := AStar2D.new()
+## Cached list of all traffic nodes currently in the scene.
 var _all_nodes: Array[TrafficNode] = []
+## Subset of traffic nodes flagged as spawn sources.
 var _spawn_nodes: Array[TrafficNode] = []
+## Fast lookup: A* id -> TrafficNode.
 var _node_by_id: Dictionary = {}
+## Fast lookup: TrafficNode -> A* id.
 var _id_by_node: Dictionary = {}
 
+## Registers this network and starts deferred graph construction.
 func _ready() -> void:
 	add_to_group("traffic_network")
 	_build_graph_deferred()
 
 
+## Waits for physics readiness, then triggers graph build to avoid stale query state.
 func _build_graph_deferred() -> void:
 	# Wait for physics_frame so all _ready() calls and shape registrations are done,
 	# then wait one more process frame so direct_space_state has fully flushed.
@@ -30,6 +54,8 @@ func _build_graph_deferred() -> void:
 	build_graph()
 
 
+## Rebuilds the complete graph from scene nodes, ray tests, and manual overrides.
+## Side effects: replaces existing A* graph state and emits graph_built.
 func build_graph() -> void:
 	astar = AStar2D.new()
 	_all_nodes.clear()
@@ -80,6 +106,7 @@ func build_graph() -> void:
 	graph_built.emit()
 
 
+## Draws graph edges for debug visualization (one line per undirected edge).
 func _draw() -> void:
 	if not draw_connections_on_start:
 		return
@@ -115,14 +142,17 @@ func _draw() -> void:
 			)
 
 
+## Returns a copy of all registered traffic nodes.
 func get_all_nodes() -> Array[TrafficNode]:
 	return _all_nodes.duplicate()
 
 
+## Returns a copy of nodes that can spawn NPC cars.
 func get_spawn_nodes() -> Array[TrafficNode]:
 	return _spawn_nodes.duplicate()
 
 
+## Returns the nearest graph node to world position.
 func get_closest_node(world_position: Vector2) -> TrafficNode:
 	if astar.get_point_count() == 0:
 		return null
@@ -130,6 +160,7 @@ func get_closest_node(world_position: Vector2) -> TrafficNode:
 	return _node_by_id.get(id, null) as TrafficNode
 
 
+## Returns nearest spawn-capable node to world position.
 func get_closest_spawn_node(world_position: Vector2) -> TrafficNode:
 	var result: TrafficNode = null
 	var min_dist := INF
@@ -141,6 +172,9 @@ func get_closest_spawn_node(world_position: Vector2) -> TrafficNode:
 	return result
 
 
+## Returns world-space path between arbitrary positions via nearest graph nodes.
+## Params: from_position and to_position are arbitrary world coordinates.
+## Returns: PackedVector2Array path points (can be empty when graph is insufficient).
 func get_path_between(from_position: Vector2, to_position: Vector2) -> PackedVector2Array:
 	if astar.get_point_count() < 2:
 		return PackedVector2Array()
@@ -153,6 +187,7 @@ func get_path_between(from_position: Vector2, to_position: Vector2) -> PackedVec
 	return astar.get_point_path(from_id, to_id)
 
 
+## Returns world-space path between two explicit traffic nodes.
 func get_path_between_nodes(from_node: TrafficNode, to_node: TrafficNode) -> PackedVector2Array:
 	if from_node == null or to_node == null:
 		return PackedVector2Array()
@@ -167,6 +202,7 @@ func get_path_between_nodes(from_node: TrafficNode, to_node: TrafficNode) -> Pac
 	return astar.get_point_path(from_id, to_id)
 
 
+## Returns cumulative edge distance between two nodes, or -1 when no path exists.
 func get_path_distance_between_nodes(from_node: TrafficNode, to_node: TrafficNode) -> float:
 	if from_node == null or to_node == null:
 		return -1.0
@@ -193,6 +229,9 @@ func get_path_distance_between_nodes(from_node: TrafficNode, to_node: TrafficNod
 	return total_distance
 
 
+## Returns path while temporarily removing selected nodes from the graph.
+## Params: avoid_nodes are excluded only for this query.
+## Returns: path in filtered graph, or empty array when blocked/unreachable.
 func get_path_between_nodes_avoiding(from_node: TrafficNode, to_node: TrafficNode, avoid_nodes: Array[TrafficNode]) -> PackedVector2Array:
 	if from_node == null or to_node == null:
 		return PackedVector2Array()
@@ -212,10 +251,12 @@ func get_path_between_nodes_avoiding(from_node: TrafficNode, to_node: TrafficNod
 	return filtered_astar.get_point_path(from_id, to_id)
 
 
+## Returns true when a valid path exists with the provided avoid-node filter.
 func has_path_between_nodes_avoiding(from_node: TrafficNode, to_node: TrafficNode, avoid_nodes: Array[TrafficNode]) -> bool:
 	return not get_path_between_nodes_avoiding(from_node, to_node, avoid_nodes).is_empty()
 
 
+## Converts avoid-node list into an id set for filtered graph construction.
 func _collect_disabled_ids(avoid_nodes: Array[TrafficNode]) -> Dictionary:
 	var disabled_ids: Dictionary = {}
 	for node: TrafficNode in avoid_nodes:
@@ -226,6 +267,7 @@ func _collect_disabled_ids(avoid_nodes: Array[TrafficNode]) -> Dictionary:
 	return disabled_ids
 
 
+## Builds a temporary A* graph that excludes disabled node ids.
 func _build_filtered_astar(disabled_ids: Dictionary) -> AStar2D:
 	var filtered_astar := AStar2D.new()
 
@@ -253,6 +295,8 @@ func _build_filtered_astar(disabled_ids: Dictionary) -> AStar2D:
 	return filtered_astar
 
 
+## Applies NoEntry and OneWay scene markers onto the built graph.
+## Rule: NoEntry disconnects both directions; OneWay reconnects only A -> B.
 func _apply_manual_overrides() -> void:
 	# NoEntry: remove connectivity in both directions.
 	for barrier in get_tree().get_nodes_in_group("NoEntryLinks"):
@@ -283,14 +327,19 @@ func _apply_manual_overrides() -> void:
 		astar.connect_points(id_a, id_b, false)
 
 
+## Resolves link endpoint from configured node property or marker fallback.
+## Returns: resolved Node2D endpoint, or null if neither source is valid.
 func _resolve_link_point(link: Node, marker_name: String, property_name: String) -> Node2D:
+	if property_name in link:
+		var configured_point: Node2D = link.get(property_name) as Node2D
+		if configured_point != null:
+			return configured_point
 	if link.has_node(marker_name):
 		return link.get_node(marker_name) as Node2D
-	if property_name in link:
-		return link.get(property_name) as Node2D
 	return null
 
 
+## Rejects edges that are too flat for surface-bound nodes.
 func _passes_surface_connection_angle_constraint(node_a: TrafficNode, node_b: TrafficNode) -> bool:
 	if node_a == null or node_b == null:
 		return false
@@ -306,10 +355,12 @@ func _passes_surface_connection_angle_constraint(node_a: TrafficNode, node_b: Tr
 	return true
 
 
+## Returns true for nodes anchored to landing pads or parking lots.
 func _is_surface_bound_node(node: TrafficNode) -> bool:
 	return node.get_landing_pad() != null or node.get_parking_lot() != null
 
 
+## Returns absolute angle-to-horizontal between two positions in degrees.
 func _connection_angle_to_horizontal_degrees(from_pos: Vector2, to_pos: Vector2) -> float:
 	var direction: Vector2 = (to_pos - from_pos).normalized()
 	if direction == Vector2.ZERO:

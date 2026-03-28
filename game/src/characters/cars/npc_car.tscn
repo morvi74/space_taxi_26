@@ -11,6 +11,11 @@ bounce = 0.4
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_umeek"]
 size = Vector2(48, 10)
 
+[sub_resource type="LabelSettings" id="LabelSettings_umeek"]
+font_size = 48
+outline_size = 1
+outline_color = Color(0, 0, 0, 1)
+
 [node name="NPCCar" type="RigidBody2D" unique_id=2017087938]
 collision_layer = 16
 collision_mask = 87
@@ -18,6 +23,15 @@ physics_material_override = SubResource("PhysicsMaterial_igko8")
 gravity_scale = 0.0
 freeze_mode = 1
 script = ExtResource("1_igko8")
+sensor_vertical_offset = 14.0
+avoid_trigger_distance = 210.0
+avoid_resume_distance = 260.0
+avoid_offset_distance = 40.0
+avoid_forward_distance = 110.0
+avoid_speed_factor = 0.62
+avoid_front_cone_degrees = 34.0
+avoid_lateral_now_threshold = 3.0
+avoid_off_cone_min_closing_speed = 2.0
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=325881841]
 texture = ExtResource("1_623t5")
@@ -51,3 +65,13 @@ collision_mask = 4
 position = Vector2(0, 4)
 target_position = Vector2(0, 32)
 collision_mask = 4
+
+[node name="IdLabel" type="Label" parent="." unique_id=2113046212]
+offset_left = -43.0
+offset_top = -34.0
+offset_right = 45.0
+offset_bottom = 38.0
+text = "0"
+label_settings = SubResource("LabelSettings_umeek")
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -1,6 +1,8 @@
+## Represents the LandingGearController component.
 class_name LandingGearController
 extends Node
 
+## Emitted when gear state changed.
 signal gear_state_changed(new_state)
 
 enum GearState
@@ -12,61 +14,93 @@ enum GearState
 	BROKEN
 }
 
+## Internal state for deploy speed.
 var _deploy_speed: float = 60.0
+## Inspector setting for max deploy speed.
 @export var _max_deploy_speed: float = 60.0
+## Inspector setting for gear retracted y.
 @export var _gear_retracted_y: float = 0.0
+## Inspector setting for gear deployed y.
 @export var _gear_deployed_y: float = 18.0
 
+## Inspector setting for max health.
 @export var _max_health: int = 100
+## Inspector setting for max landing speed.
 @export var _max_landing_speed: float = 80.0
+## Returns max landing speed.
 func get_max_landing_speed() -> float:
 	return _max_landing_speed
+## Inspector setting for max settle vertical speed.
 @export var _max_settle_vertical_speed: float = 2.0
+## Inspector setting for max settle vertical speed delta.
 @export var _max_settle_vertical_speed_delta: float = 0.8
+## Inspector setting for landing stable time.
 @export var _landing_stable_time: float = 0.2
 
+## Internal state for health.
 var _health: int = 0
+## Internal state for state.
 var _state: GearState = GearState.RETRACTED
+## Returns state.
 func get_state() -> GearState:
 	return _state
+## Internal state for current gear y.
 var _current_gear_y: float = 0.0
+## Internal state for stable timer.
 var _stable_timer: float = 0.0
+## Internal state for last vertical speed.
 var _last_vertical_speed: float = 0.0
+## Internal state for has last vertical speed.
 var _has_last_vertical_speed: bool = false
 
 # Reference to the Taxi node
+## Internal state for taxi.
 var _taxi: Taxi
+## Updates taxi.
 func set_taxi(taxi_instance: Taxi) -> void:
 	_taxi = taxi_instance
 
 # Collision nodes for landing gear and feet
+## Internal state for mono foot collision.
 var _mono_foot_collision: Node2D
+## Updates mono foot collision.
 func set_mono_foot_collision(collision_node: Node2D) -> void:
 	_mono_foot_collision = collision_node
 	_is_dual_foot = false
 	print("Mono foot collision set to: ", _mono_foot_collision)
 	_apply_gear_positions()  # Ensure the collision node is positioned correctly when set
+## Internal state for left foot collision.
 var _left_foot_collision: Node2D
+## Internal state for right foot collision.
 var _right_foot_collision: Node2D
+## Updates dual foot collision.
 func set_dual_foot_collision(left_collision_node: Node2D, right_collision_node: Node2D) -> void:
 	_left_foot_collision = left_collision_node
 	_right_foot_collision = right_collision_node
 	_is_dual_foot = true
 	_apply_gear_positions()  # Ensure the collision nodes are positioned correctly when set
 
+## Internal state for is dual foot.
 var _is_dual_foot: bool = false
 
 # RayCast2D nodes for foot detection and gear root
+## Inspector setting for landing gear root.
 @export var _landing_gear_root: Node2D# = $"../../LandingGearRoot"
+## Inspector setting for foot left ray.
 @export var _foot_left_ray: RayCast2D# = $"../../LandingGearRoot/FootLeftRay"
+## Inspector setting for foot right ray.
 @export var _foot_right_ray: RayCast2D# = $"../../LandingGearRoot/FootRightRay"
+## Inspector setting for center ray.
 @export var _center_ray: RayCast2D# = $"../../LandingGearRoot/CenterRay"
 
+## Internal state for landing pad below.
 var _landing_pad_below: LandingPad = null
+## Returns current landing pad.
 func get_current_landing_pad() -> LandingPad:
 	return _landing_pad_below
 
 
+## Initializes runtime references and startup state.
 func _ready() -> void:
 	_health = _max_health
 	EventHub.emit_gear_health_changed(_health)  # Emit initial health value to UI
@@ -79,6 +113,7 @@ func _ready() -> void:
 # Toggles the landing gear between deployed and retracted states, initiating the appropriate deployment or retraction process based on the current state of the gear. This function is typically called in response to player input, allowing the player to control the landing gear during flight and landing maneuvers.
 #
 # @return void
+## Toggles gear.
 func toggle_gear() -> void:
 	match _state:
 		GearState.RETRACTED, GearState.RETRACTING:
@@ -89,6 +124,7 @@ func toggle_gear() -> void:
 			gear_state_changed.emit(_state)
 
 
+## Updates physics-driven behavior.
 func _physics_process(delta: float) -> void:
 	if _state in [GearState.DEPLOYING, GearState.RETRACTING]:
 		_update_gear(delta)
@@ -98,6 +134,7 @@ func _physics_process(delta: float) -> void:
 		_landing_pad_below = null
 
 
+## Resolves landing pad from collider.
 func _resolve_landing_pad_from_collider(collider: Node) -> LandingPad:
 	if collider == null:
 		return null
@@ -115,6 +152,7 @@ func _resolve_landing_pad_from_collider(collider: Node) -> LandingPad:
 	return null
 
 # Updates the landing gear position based on the current _state and the deploy speed
+## Updates gear each frame.
 func _update_gear(delta: float) -> void:
 	match _state:
 		GearState.DEPLOYING:
@@ -139,6 +177,7 @@ func _update_gear(delta: float) -> void:
 
 
 # Updates the position of the landing gear based on the current gear _state
+## Applies gear positions.
 func _apply_gear_positions() -> void:
 	var root_position: Vector2 = _landing_gear_root.position
 	root_position.y = _current_gear_y
@@ -156,16 +195,19 @@ func _apply_gear_positions() -> void:
 
 
 # Gear _state checks
+## Checks whether deployed.
 func is_deployed() -> bool:
 	return _state == GearState.DEPLOYED
 
 
 # Checks if the landing gear is in a _state that allows it to be deployed or retracted
+## Checks whether broken.
 func is_broken() -> bool:
 	return _state == GearState.BROKEN
 
 
 # Checks if the landing gear is in a _state that allows landing, and if the conditions for a safe landing are met
+## Checks whether the object can land.
 func can_land() -> bool:
 	if _state != GearState.DEPLOYED:
 		return false
@@ -189,6 +231,7 @@ func can_land() -> bool:
 
 
 # Updates the landing process, checking if the landing conditions are met and if the landing has been stable for the required time to be considered successful
+## Handles landing complete.
 func landing_complete(delta: float) -> bool:
 	if can_land() and _is_vertical_motion_settled():
 		_stable_timer += delta
@@ -201,6 +244,7 @@ func landing_complete(delta: float) -> bool:
 	return false
 
 
+## Checks whether vertical motion settled.
 func _is_vertical_motion_settled() -> bool:
 	if _taxi == null:
 		return false
@@ -220,6 +264,7 @@ func _is_vertical_motion_settled() -> bool:
 
 
 # Applies damage to the landing gear, reducing its _health and potentially breaking it if the _health drops to zero or below
+## Applies damage.
 func apply_damage(amount: int) -> void:
 	if _state == GearState.BROKEN:
 		return
@@ -239,6 +284,7 @@ func apply_damage(amount: int) -> void:
 # The first 10% of damage will have no effect on deploy speed, The minimal deploy speed will be 10% of max deploy speed starting at 90% damage, and the deploy speed will decrease linearly between these points. This allows for a more forgiving damage model where minor damage does not immediately cripple the landing gear, while severe damage significantly impacts its functionality.
 #
 # @return void
+## Updates deploy speed.
 func _set_deploy_speed() -> void:
 	var damage_percent = float(_health) / float(_max_health)
 	if damage_percent >= 0.9:

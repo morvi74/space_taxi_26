@@ -1,34 +1,48 @@
 @tool
+## Represents the JunctionGraph2D component.
 class_name JunctionGraph2D
 extends Node2D
 
+## Inspector setting for default point color.
 @export var default_point_color: Color = Color(1.0, 0.0, 0.0, 1.0)
+## Inspector setting for show points in game.
 @export var show_points_in_game: bool = true
+## Inspector setting for show graph in game.
 @export var show_graph_in_game: bool = true
+## Inspector setting for graph color.
 @export var graph_color: Color = Color(1.0, 1.0, 0.2, 0.9)
+## Inspector setting for graph width.
 @export var graph_width: float = 2.0
+## Inspector setting for blocking mask.
 @export_flags_2d_physics var blocking_mask: int = (1 << 1) | (1 << 2) | (1 << 5) | (1 << 6)
+## Inspector setting for auto rebuild in editor.
 @export var auto_rebuild_in_editor: bool = true
 
+## Runtime state for connections.
 var connections: Dictionary = {} # Dictionary<JunctionPoint2D, Array<JunctionPoint2D>>
 #var _last_dragged: JunctionPoint2D = null
 
+## Internal helper that handles enter tree.
 func _enter_tree() -> void:
 	if not child_exiting_tree.is_connected(_on_child_exiting_tree):
 		child_exiting_tree.connect(_on_child_exiting_tree)
 
+## Handles the child exiting tree callback.
 func _on_child_exiting_tree(node: Node) -> void:
 	if node is JunctionPoint2D:
 		# Rebuild after the node is actually removed to avoid stale object references.
 		call_deferred("rebuild_graph")
 
+## Initializes runtime references and startup state.
 func _ready() -> void:
 	rebuild_graph()
 
+## Updates per-frame behavior.
 func _process(_delta: float) -> void:
 	if Engine.is_editor_hint():
 		queue_redraw()
 
+## Returns junctions.
 func get_junctions() -> Array[JunctionPoint2D]:
 	var result: Array[JunctionPoint2D] = []
 	for child: Node in get_children():
@@ -36,6 +50,7 @@ func get_junctions() -> Array[JunctionPoint2D]:
 			result.append(child as JunctionPoint2D)
 	return result
 
+## Handles rebuild graph.
 func rebuild_graph() -> void:
 	connections.clear()
 
@@ -60,6 +75,7 @@ func rebuild_graph() -> void:
 
 	queue_redraw()
 
+## Internal helper that handles cleanup invalid exceptions.
 func _cleanup_invalid_exceptions(junctions: Array[JunctionPoint2D]) -> void:
 	var valid_points: Dictionary = {}
 	for junction: JunctionPoint2D in junctions:
@@ -81,6 +97,7 @@ func _cleanup_invalid_exceptions(junctions: Array[JunctionPoint2D]) -> void:
 			else:
 				seen[candidate] = true
 
+## Checks whether exception.
 func _is_exception(a: JunctionPoint2D, b: JunctionPoint2D) -> bool:
 	if a == null or b == null:
 		return false
@@ -88,6 +105,7 @@ func _is_exception(a: JunctionPoint2D, b: JunctionPoint2D) -> bool:
 		return false
 	return a.exceptions.has(b) or b.exceptions.has(a)
 
+## Checks whether clear line is available.
 func _has_clear_line(
 	from_pos: Vector2,
 	to_pos: Vector2,
@@ -118,6 +136,7 @@ func _has_clear_line(
 	var hit: Dictionary = space_state.intersect_ray(query)
 	return hit.is_empty()
 
+## Draws editor or debug visuals.
 func _draw() -> void:
 	var draw_runtime: bool = not Engine.is_editor_hint() and (show_points_in_game or show_graph_in_game)
 	var draw_editor: bool = Engine.is_editor_hint()
@@ -163,6 +182,7 @@ func _draw() -> void:
 				junction.point_color
 			)
 
+## Returns neighbors.
 func get_neighbors(point: JunctionPoint2D) -> Array[JunctionPoint2D]:
 	if not connections.has(point):
 		return []

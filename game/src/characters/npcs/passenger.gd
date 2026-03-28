@@ -1,23 +1,32 @@
 extends Area2D
+## Represents the Passenger component.
 class_name Passenger 
 
 
 
 
+## Cached node reference for anim player.
 @onready var _anim_player: AnimationPlayer = $AnimationPlayer
 #@onready var _sprite: Sprite2D = $Sprite2D
 
+## Inspector setting for walk speed.
 @export var _walk_speed: float = 50.0
 
+## Internal state for start landing pad.
 var _start_landing_pad: LandingPad = null
+## Updates start landing pad.
 func set_start_landing_pad(landing_pad: LandingPad) -> void:
 	_start_landing_pad = landing_pad
+## Returns start landing pad.
 func get_start_landing_pad() -> LandingPad:
 	return _start_landing_pad
 
+## Internal state for destination landing pad.
 var _destination_landing_pad: LandingPad = null
+## Updates destination landing pad.
 func set_destination_landing_pad(landing_pad: LandingPad) -> void:
 	_destination_landing_pad = landing_pad
+## Returns destination landing pad.
 func get_destination_landing_pad() -> LandingPad:
 	return _destination_landing_pad
 
@@ -34,16 +43,24 @@ enum State {
 	DYING
 }
 
+## Internal state for state.
 var _state: State 
+## Internal state for moving destination.
 var _moving_destination: Vector2 = Vector2.INF
+## Internal state for direction.
 var _direction: Vector2 = Vector2.ZERO
+## Internal state for passenger parent node.
 var _passenger_parent_node: Node2D = null
+## Returns passenger parent node.
 func get_passenger_parent_node() -> Node2D:
 	return _passenger_parent_node
+## Updates passenger parent node.
 func set_passenger_parent_node(node: Node2D) -> void:
 	_passenger_parent_node = node
 
+## Internal state for transport distance.
 var _transport_distance: float = 0.0
+## Returns transport distance.
 func get_transport_distance() -> float:
 	return _transport_distance
 
@@ -51,6 +68,7 @@ func get_transport_distance() -> float:
 # func _ready() -> void:
 # 	EventHub.taxi_landed.connect(_on_taxi_landed)
 
+## Handles activate.
 func activate() -> void:		
 	_state = State.SPAWNING
 	global_position = _start_landing_pad.get_waiting_zone().get_waiting_position()
@@ -63,6 +81,7 @@ func activate() -> void:
 		_transport_distance = ManagerHub.get_traffic_manager().get_distance_between_landing_pads(_start_landing_pad, _destination_landing_pad)
 	
 
+## Updates physics-driven behavior.
 func _physics_process(delta: float) -> void:
 	match _state:
 		State.WALKING_TO_TAXI:
@@ -81,6 +100,7 @@ func _physics_process(delta: float) -> void:
 				_anim_player.play("become_invisible")
 
 
+## Handles the animation player animation finished callback.
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "become_visible":
 		if _state == State.SPAWNING:
@@ -114,6 +134,7 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 			queue_free()
 
 
+## Handles walk to taxi.
 func walk_to_taxi(pos_x: float) -> void:
 	if _state == State.WAITING_FOR_TAXI:
 		_state = State.WALKING_TO_TAXI
@@ -124,12 +145,14 @@ func walk_to_taxi(pos_x: float) -> void:
 		_moving_destination = Vector2(pos_x, global_position.y)
 
 
+## Internal helper that handles enter taxi.
 func _enter_taxi() -> void:
 	if _state == State.WALKING_TO_TAXI:
 		_state = State.ENTER_TAXI
 		_anim_player.play("become_invisible")
 		
 
+## Handles exit taxi.
 func exit_taxi() -> void:
 	if _state == State.IN_TAXI:
 		_state = State.EXIT_TAXI

@@ -1,30 +1,44 @@
 extends Marker2D
+## Represents the TrafficNode component.
 class_name TrafficNode
 
+## Inspector setting for is spawn node.
 @export var is_spawn_node: bool = false
+## Inspector setting for weight modifier.
 @export var weight_modifier: float = 1.0
+## Inspector setting for can be destination.
 @export var can_be_destination: bool = false
+## Inspector setting for no despawn.
 @export var no_despawn: bool = false # If true, TrafficManager will never despawn cars at this node, even if they meet other despawn criteria. Useful for key locations like parking lots or garages that should remain active.
 
+## Cached node reference for detection area.
 @onready var _detection_area: Area2D = $Area2D
 
+## Internal state for landing pad.
 var _landing_pad: LandingPad = null
+## Returns landing pad.
 func get_landing_pad() -> LandingPad:
 	return _landing_pad
+## Updates landing pad.
 func set_landing_pad(landing_pad: LandingPad) -> void:
 	_landing_pad = landing_pad
 
+## Internal state for parking lot.
 var _parking_lot: ParkikngLot = null
+## Returns parking lot.
 func get_parking_lot() -> ParkikngLot:
 	return _parking_lot
+## Updates parking lot.
 func set_parking_lot(parking_lot: ParkikngLot) -> void:
 	_parking_lot = parking_lot
 
 
+## Initializes runtime references and startup state.
 func _ready() -> void:
 	call_deferred("_bind_touching_surfaces")
 
 
+## Internal helper that handles bind touching surfaces.
 func _bind_touching_surfaces() -> void:
 	await get_tree().physics_frame
 	if _landing_pad != null and _parking_lot != null:
@@ -85,11 +99,14 @@ func _bind_touching_surfaces() -> void:
 		candidate_lot.set_traffic_node(self)
 
 
-# Runtime occupation state — managed by TrafficManager, not saved.
+# Runtime occupation state - managed by TrafficManager, not saved.
+## Runtime state for is occupied.
 var is_occupied: bool = false
 
+## Handles claim.
 func claim() -> void:
 	is_occupied = true
 
+## Handles release.
 func release() -> void:
 	is_occupied = false

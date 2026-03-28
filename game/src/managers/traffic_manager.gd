@@ -1,41 +1,89 @@
 extends Node
+## Coordinates NPC spawning, destination reservation, despawn policy, and debug telemetry.
 class_name TrafficManager
 
+## Responsibilities:
+## - spawn/register/despawn NPC cars within dynamic capacity constraints
+## - reserve destination nodes to avoid routing conflicts between cars
+## - collect optional CSV telemetry for avoidance diagnostics
+## Doc convention:
+## - First line states intent in one sentence.
+## - Optional Params line for non-trivial inputs.
+## - Optional Returns line for non-obvious outputs.
+## - Keep wording behavior-focused, not implementation-focused.
+
+## Typed preload for runtime traffic network access.
 const TrafficNetworkType = preload("res://src/levels/traffic_network.gd")
+## Typed preload for traffic node references.
 const TrafficNodeType = preload("res://src/levels/traffic_node.gd")
+## Typed preload for NPC car instances.
 const NPCCarType = preload("res://src/characters/cars/npc_car.gd")
 
+## Scene reference to the active TrafficNetwork node.
 @export var traffic_network: Node
+## Packed scene used when spawning a new NPC car.
 @export var npc_car_scene: PackedScene
+## Optional parent node for spawned NPC cars.
 @export var npc_root_node: Node2D
 
+## Spawn timer period in seconds.
 @export var spawn_interval: float = 10.0
+## Upper bound for simultaneously active NPC cars.
 @export var max_active_cars: int = 6
+## Minimum distance between chosen spawn node and first destination.
 @export var min_spawn_to_initial_destination_distance: float = 1200.0
+## Minimum player distance required before destination-based despawn is allowed.
 @export var despawn_min_distance_to_player: float = 1800.0
+## Propagates NPC sensor ray debug rendering to all active cars.
 @export var debug_npc_sensor_overlay: bool = false
+## Line width used by NPC sensor debug overlay.
 @export var debug_npc_sensor_line_width: float = 2.0
+## Enables writing structured avoidance telemetry into CSV.
+@export var debug_csv_logging_enabled: bool = false
+## File path for CSV telemetry output.
+@export var debug_csv_log_path: String = "user://logs/npc_avoidance_log.csv"
+## Minimum sampling interval for movement/debug CSV rows.
+@export var debug_csv_log_interval_seconds: float = 0.25
 
+## Typed runtime network reference after validation.
 var _traffic_network: TrafficNetworkType
+## Cached destination-eligible traffic nodes.
 var _destination_nodes: Array[TrafficNodeType] = []
+## Cached spawn-eligible traffic nodes.
 var _spawn_nodes: Array[TrafficNodeType] = []
+## Current live NPC cars managed by this system.
 var _active_cars: Array[NPCCarType] = []
+## RNG for spawn and destination selection.
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+## Last applied sensor-overlay value to detect runtime changes.
 var _last_debug_npc_sensor_overlay: bool = false
+## Last applied sensor-line width to detect runtime changes.
 var _last_debug_npc_sensor_line_width: float = 0.0
+## Monotonic id source for assigning unique car ids.
 var _next_car_id: int = 1
+## Reservation map: car id -> destination node.
 var _reserved_destination_by_car_id: Dictionary = {}
+## Pending release map used while cars leave previously reserved nodes.
 var _pending_release_destination_by_car_id: Dictionary = {}
+## Reservation owner map: node id -> car id.
 var _reserved_destination_owner_by_node_id: Dictionary = {}
+## Tracks whether CSV header has been emitted for current file.
+var _csv_header_written: bool = false
+## Last applied CSV logging toggle for change detection.
+var _last_debug_csv_logging_enabled: bool = false
 
+## Spawn timer node driving periodic spawn attempts.
 @onready var _spawn_timer: Timer = $SpawnTimer
 
 
-## Initializes manager state and waits for the traffic graph to be built.
+## Validates dependencies, initializes caches, and waits for network graph readiness.
 func _ready() -> void:
 	_rng.randomize()
 	_last_debug_npc_sensor_overlay = debug_npc_sensor_overlay
 	_last_debug_npc_sensor_line_width = debug_npc_sensor_line_width
+	_last_debug_csv_logging_enabled = debug_csv_logging_enabled
+	if debug_csv_logging_enabled:
+		_ensure_csv_logger_ready()
 
 	if traffic_network == null:
 		push_error("TrafficManager: 'traffic_network' export is not assigned in the inspector.")
@@ -50,8 +98,13 @@ func _ready() -> void:
 	_traffic_network.graph_built.connect(_start, CONNECT_ONE_SHOT)
 
 
-## Propagates debug visualization toggles to active NPC cars when values change.
+## Pushes runtime debug-toggle changes to active cars and CSV logger state.
 func _process(_delta: float) -> void:
+	if _last_debug_csv_logging_enabled != debug_csv_logging_enabled:
+		_last_debug_csv_logging_enabled = debug_csv_logging_enabled
+		if debug_csv_logging_enabled:
+			_ensure_csv_logger_ready()
+
 	if _last_debug_npc_sensor_overlay == debug_npc_sensor_overlay and is_equal_approx(_last_debug_npc_sensor_line_width, debug_npc_sensor_line_width):
 		return
 
@@ -60,7 +113,217 @@ func _process(_delta: float) -> void:
 	_apply_debug_visualization_to_all_cars()
 
 
-## Starts runtime systems once the traffic network graph is available.
+## Returns clamped CSV log interval to avoid zero/too-small sampling.
+func get_debug_csv_log_interval_seconds() -> float:
+	return maxf(0.05, debug_csv_log_interval_seconds)
+
+
+## Appends one structured NPC debug event row to CSV.
+## Params: event_name identifies event type; car is optional source; payload extends columns.
+func log_npc_debug_event(event_name: String, car: NPCCarType, payload: Dictionary = {}) -> void:
+	if not debug_csv_logging_enabled:
+		return
+	if event_name.is_empty():
+		return
+	if not _ensure_csv_logger_ready():
+		return
+
+	var date_text: String = Time.get_date_string_from_system()
+	var time_text: String = Time.get_time_string_from_system()
+	var unix_ms: int = int(round(Time.get_unix_time_from_system() * 1000.0))
+	var frame: int = Engine.get_frames_drawn()
+
+	var car_id: int = -1
+	var other_car_id: int = -1
+	var phase: String = ""
+	var avoid_side: float = 0.0
+	var blocking_car_id: int = -1
+	var pos_x: float = 0.0
+	var pos_y: float = 0.0
+	var vel_x: float = 0.0
+	var vel_y: float = 0.0
+	var speed: float = 0.0
+	var path_index: int = -1
+	var path_size: int = -1
+	var target_x: float = 0.0
+	var target_y: float = 0.0
+	var distance_to_target: float = -1.0
+	var projection_now: float = 0.0
+	var projection_future: float = 0.0
+	var closing_speed: float = 0.0
+	var decision_mode: String = ""
+	var reason: String = ""
+
+	if car != null and is_instance_valid(car):
+		car_id = car.get_car_id()
+		pos_x = car.global_position.x
+		pos_y = car.global_position.y
+		vel_x = car.linear_velocity.x
+		vel_y = car.linear_velocity.y
+		speed = car.linear_velocity.length()
+
+	if payload.has("other_car_id"):
+		other_car_id = int(payload.get("other_car_id"))
+	if payload.has("phase"):
+		phase = str(payload.get("phase"))
+	if payload.has("avoid_side"):
+		avoid_side = float(payload.get("avoid_side"))
+	if payload.has("blocking_car_id"):
+		blocking_car_id = int(payload.get("blocking_car_id"))
+	if payload.has("pos_x"):
+		pos_x = float(payload.get("pos_x"))
+	if payload.has("pos_y"):
+		pos_y = float(payload.get("pos_y"))
+	if payload.has("vel_x"):
+		vel_x = float(payload.get("vel_x"))
+	if payload.has("vel_y"):
+		vel_y = float(payload.get("vel_y"))
+	if payload.has("speed"):
+		speed = float(payload.get("speed"))
+	if payload.has("path_index"):
+		path_index = int(payload.get("path_index"))
+	if payload.has("path_size"):
+		path_size = int(payload.get("path_size"))
+	if payload.has("target_x"):
+		target_x = float(payload.get("target_x"))
+	if payload.has("target_y"):
+		target_y = float(payload.get("target_y"))
+	if payload.has("distance_to_target"):
+		distance_to_target = float(payload.get("distance_to_target"))
+	if payload.has("projection_now"):
+		projection_now = float(payload.get("projection_now"))
+	if payload.has("projection_future"):
+		projection_future = float(payload.get("projection_future"))
+	if payload.has("closing_speed"):
+		closing_speed = float(payload.get("closing_speed"))
+	if payload.has("decision_mode"):
+		decision_mode = str(payload.get("decision_mode"))
+	if payload.has("reason"):
+		reason = str(payload.get("reason"))
+
+	var row: Array = [
+		date_text,
+		time_text,
+		unix_ms,
+		frame,
+		event_name,
+		car_id,
+		other_car_id,
+		phase,
+		avoid_side,
+		blocking_car_id,
+		pos_x,
+		pos_y,
+		vel_x,
+		vel_y,
+		speed,
+		path_index,
+		path_size,
+		target_x,
+		target_y,
+		distance_to_target,
+		projection_now,
+		projection_future,
+		closing_speed,
+		decision_mode,
+		reason,
+	]
+	_append_csv_row(row)
+
+
+## Ensures log directory/file exist and header is present before writes.
+func _ensure_csv_logger_ready() -> bool:
+	var base_dir: String = debug_csv_log_path.get_base_dir()
+	if not base_dir.is_empty() and not DirAccess.dir_exists_absolute(base_dir):
+		var mk_result: int = DirAccess.make_dir_recursive_absolute(base_dir)
+		if mk_result != OK:
+			push_warning("TrafficManager: failed to create CSV log dir: %s" % base_dir)
+			return false
+
+	if _csv_header_written:
+		return true
+
+	var file: FileAccess = _open_csv_for_append()
+	if file == null:
+		push_warning("TrafficManager: failed to open CSV log: %s" % debug_csv_log_path)
+		return false
+
+	if file.get_length() <= 0:
+		var header: Array = [
+			"date",
+			"time",
+			"unix_ms",
+			"frame",
+			"event",
+			"car_id",
+			"other_car_id",
+			"phase",
+			"avoid_side",
+			"blocking_car_id",
+			"pos_x",
+			"pos_y",
+			"vel_x",
+			"vel_y",
+			"speed",
+			"path_index",
+			"path_size",
+			"target_x",
+			"target_y",
+			"distance_to_target",
+			"projection_now",
+			"projection_future",
+			"closing_speed",
+			"decision_mode",
+			"reason",
+		]
+		file.store_line(_to_csv_line(header))
+		file.flush()
+
+	_csv_header_written = true
+	return true
+
+
+## Appends one CSV row to the telemetry file.
+func _append_csv_row(values: Array) -> void:
+	var file: FileAccess = _open_csv_for_append()
+	if file == null:
+		push_warning("TrafficManager: failed to append CSV log row.")
+		return
+	file.store_line(_to_csv_line(values))
+	file.flush()
+
+
+## Opens CSV in append mode (creating file if missing).
+func _open_csv_for_append() -> FileAccess:
+	if FileAccess.file_exists(debug_csv_log_path):
+		var existing_file: FileAccess = FileAccess.open(debug_csv_log_path, FileAccess.READ_WRITE)
+		if existing_file != null:
+			existing_file.seek_end()
+		return existing_file
+	return FileAccess.open(debug_csv_log_path, FileAccess.WRITE)
+
+
+## Serializes an array of values into one escaped CSV line.
+func _to_csv_line(values: Array) -> String:
+	var cells: Array[String] = []
+	for value: Variant in values:
+		cells.append(_to_csv_cell(value))
+	return ",".join(cells)
+
+
+## Escapes a single CSV cell, including quotes and line breaks.
+func _to_csv_cell(value: Variant) -> String:
+	if value == null:
+		return ""
+	var text: String = str(value)
+	text = text.replace("\r", " ").replace("\n", " ")
+	if text.contains(",") or text.contains("\""):
+		text = text.replace("\"", "\"\"")
+		return "\"%s\"" % text
+	return text
+
+
+## Starts runtime traffic systems after graph build and clamps active-car budget.
 func _start() -> void:
 	_find_destination_nodes()
 	_find_spawn_nodes()
@@ -70,7 +333,7 @@ func _start() -> void:
 	_register_existing_cars()
 
 
-## Caches all destination-capable traffic nodes from the network.
+## Refreshes destination-node cache from TrafficNetwork.
 func _find_destination_nodes() -> void:
 	_destination_nodes.clear()
 	for node: TrafficNodeType in _traffic_network.get_all_nodes():
@@ -78,7 +341,7 @@ func _find_destination_nodes() -> void:
 			_destination_nodes.append(node)
 
 
-## Caches all spawn-enabled traffic nodes from the network.
+## Refreshes spawn-node cache from TrafficNetwork.
 func _find_spawn_nodes() -> void:
 	_spawn_nodes.clear()
 	for node: TrafficNodeType in _traffic_network.get_all_nodes():
@@ -86,7 +349,8 @@ func _find_spawn_nodes() -> void:
 			_spawn_nodes.append(node)
 
 
-## Spawns a new NPC car when limits allow it.
+## Spawn tick: attempts one spawn when capacity and destination constraints allow.
+## Trigger: connected to SpawnTimer timeout.
 func _on_spawn_timer_timeout() -> void:
 	if _traffic_network == null or npc_car_scene == null:
 		return
@@ -103,7 +367,7 @@ func _on_spawn_timer_timeout() -> void:
 	_spawn_car_at(spawn_node)
 
 
-## Instantiates and registers a car at the given spawn node.
+## Instantiates, registers, and assigns first destination to a spawned car.
 func _spawn_car_at(spawn_node: TrafficNodeType) -> void:
 	var car: NPCCarType = npc_car_scene.instantiate() as NPCCarType
 	if car == null:
@@ -124,7 +388,7 @@ func _spawn_car_at(spawn_node: TrafficNodeType) -> void:
 		car.queue_free()
 
 
-## Registers pre-placed cars already present in the scene tree.
+## Registers pre-existing scene cars and assigns a destination if missing.
 func _register_existing_cars() -> void:
 	for node: Node in get_tree().get_nodes_in_group("npc_cars"):
 		var car: NPCCarType = node as NPCCarType
@@ -138,7 +402,7 @@ func _register_existing_cars() -> void:
 				car.set_new_destination_node(dest)
 
 
-## Registers a single car and wires manager dependencies and cleanup signals.
+## Registers one car in manager state and wires lifecycle callbacks.
 func _register_car(car: NPCCarType) -> void:
 	if _active_cars.has(car):
 		return
@@ -150,13 +414,13 @@ func _register_car(car: NPCCarType) -> void:
 		car.tree_exited.connect(_on_car_tree_exited.bind(car))
 
 
-## Handles cleanup when a registered car leaves the scene tree.
+## Cleans reservations and active list when a car leaves the scene tree.
 func _on_car_tree_exited(car: NPCCarType) -> void:
 	release_destination_for_car(car)
 	_active_cars.erase(car)
 
 
-## Applies current debug visualization settings to all active cars.
+## Applies current debug-visualization settings to all active cars.
 func _apply_debug_visualization_to_all_cars() -> void:
 	for car: NPCCarType in _active_cars:
 		if car == null or not is_instance_valid(car):
@@ -164,7 +428,7 @@ func _apply_debug_visualization_to_all_cars() -> void:
 		_apply_debug_visualization_to_car(car)
 
 
-## Applies current debug visualization settings to one car.
+## Applies current debug-visualization settings to one car.
 func _apply_debug_visualization_to_car(car: NPCCarType) -> void:
 	if car == null:
 		return
@@ -172,7 +436,9 @@ func _apply_debug_visualization_to_car(car: NPCCarType) -> void:
 	car.debug_sensor_line_width = debug_npc_sensor_line_width
 
 
-## Returns a next destination for a car using simple distance and occupancy constraints.
+## Selects and reserves the next valid destination respecting distance and occupancy constraints.
+## Params: avoid_node can exclude a source node; min_distance_from_avoid overrides default distance gate.
+## Returns: reserved destination node or null when no valid candidate exists.
 func request_next_destination(car: NPCCarType, avoid_node: TrafficNodeType = null, min_distance_from_avoid: float = 0.0) -> TrafficNodeType:
 	if _traffic_network == null or _destination_nodes.is_empty() or car == null:
 		return null
@@ -190,14 +456,14 @@ func request_next_destination(car: NPCCarType, avoid_node: TrafficNodeType = nul
 	return target
 
 
-## Returns the currently reserved destination node for a car.
+## Returns the currently reserved destination node for the given car.
 func get_reserved_destination_for_car(car: NPCCarType) -> TrafficNodeType:
 	if car == null:
 		return null
 	return _reserved_destination_by_car_id.get(car.get_car_id(), null) as TrafficNodeType
 
 
-## Releases the previous destination reservation after the car has left it via the new route.
+## Releases pending reservation once a car has safely left its previous destination node.
 func notify_car_passed_first_departure_node(car: NPCCarType) -> void:
 	if car == null:
 		return
@@ -209,7 +475,7 @@ func notify_car_passed_first_departure_node(car: NPCCarType) -> void:
 	_pending_release_destination_by_car_id.erase(car_id)
 
 
-## Releases all destination reservations held by the given car.
+## Releases both active and pending reservations owned by a car.
 func release_destination_for_car(car: NPCCarType) -> void:
 	if car == null:
 		return
@@ -224,7 +490,8 @@ func release_destination_for_car(car: NPCCarType) -> void:
 		_pending_release_destination_by_car_id.erase(car_id)
 
 
-## Returns true if the car may despawn at its current reserved destination node.
+## Returns true when destination and player-distance rules permit despawning.
+## Returns: true only for spawn nodes that are non-critical and far enough from player taxi.
 func should_despawn_car_at_destination(car: NPCCarType) -> bool:
 	if car == null:
 		return false
@@ -251,7 +518,7 @@ func should_despawn_car_at_destination(car: NPCCarType) -> bool:
 	return distance_to_player >= despawn_min_distance_to_player
 
 
-## Despawns a car and releases all destination reservations held by it.
+## Despawns a car after releasing reservation ownership.
 func despawn_car(car: NPCCarType) -> void:
 	if car == null or not is_instance_valid(car):
 		return
@@ -259,21 +526,21 @@ func despawn_car(car: NPCCarType) -> void:
 	car.queue_free()
 
 
-## Returns the closest traffic node to a world position.
+## Forwards nearest-node query to TrafficNetwork.
 func request_closest_node(world_position: Vector2) -> TrafficNodeType:
 	if _traffic_network == null:
 		return null
 	return _traffic_network.get_closest_node(world_position)
 
 
-## Returns a traffic-network path between two world positions.
+## Forwards world-position path query to TrafficNetwork.
 func request_path_between(from_position: Vector2, to_position: Vector2) -> PackedVector2Array:
 	if _traffic_network == null:
 		return PackedVector2Array()
 	return _traffic_network.get_path_between(from_position, to_position)
 
 
-## Assigns a stable ascending runtime ID to a car.
+## Assigns a stable unique id to car instances that do not have one yet.
 func _assign_car_id(car: NPCCarType) -> void:
 	if car == null:
 		return
@@ -284,12 +551,12 @@ func _assign_car_id(car: NPCCarType) -> void:
 	_next_car_id += 1
 
 
-## Returns the maximum number of active cars allowed for the current destination count.
+## Returns destination-capacity-derived hard cap for active cars.
 func _get_max_allowed_active_cars() -> int:
 	return _destination_nodes.size() / 2
 
 
-## Returns spawn nodes that currently also have at least one free destination available.
+## Returns spawn nodes that still allow at least one valid initial destination.
 func _get_spawnable_nodes() -> Array[TrafficNodeType]:
 	var candidates: Array[TrafficNodeType] = []
 	for spawn_node: TrafficNodeType in _spawn_nodes:
@@ -303,7 +570,8 @@ func _get_spawnable_nodes() -> Array[TrafficNodeType]:
 	return candidates
 
 
-## Returns all currently free destination nodes matching the request constraints.
+## Filters destination candidates by reservation, occupancy, and min-distance rules.
+## Returns: candidate list for routing/reservation (may be empty).
 func _get_free_destination_candidates(car: NPCCarType, avoid_node: TrafficNodeType, effective_min_distance: float) -> Array[TrafficNodeType]:
 	var candidates: Array[TrafficNodeType] = []
 	var requesting_car_id: int = car.get_car_id() if car != null else -1
@@ -322,7 +590,7 @@ func _get_free_destination_candidates(car: NPCCarType, avoid_node: TrafficNodeTy
 	return candidates
 
 
-## Reserves a destination node for a car and tracks any pending release of its previous destination.
+## Moves reservation ownership to new destination and defers release of prior one.
 func _reserve_destination_for_car(car: NPCCarType, node: TrafficNodeType) -> void:
 	if car == null or node == null:
 		return
@@ -336,14 +604,14 @@ func _reserve_destination_for_car(car: NPCCarType, node: TrafficNodeType) -> voi
 		node.claim()
 
 
-## Returns whether a destination node is reserved by any car.
+## Returns true if any car currently owns this node reservation.
 func _is_node_reserved(node: TrafficNodeType) -> bool:
 	if node == null:
 		return false
 	return _reserved_destination_owner_by_node_id.has(node.get_instance_id())
 
 
-## Returns whether a destination node is reserved by a different car.
+## Returns true if reservation owner is different from the given car id.
 func _is_node_reserved_by_other_car(node: TrafficNodeType, car_id: int) -> bool:
 	if node == null:
 		return false
@@ -353,7 +621,7 @@ func _is_node_reserved_by_other_car(node: TrafficNodeType, car_id: int) -> bool:
 	return int(owner) != car_id
 
 
-## Returns whether a destination node is reserved for the given car.
+## Returns true if reservation owner matches the given car id.
 func _is_node_reserved_for_car(node: TrafficNodeType, car_id: int) -> bool:
 	if node == null:
 		return false
@@ -363,7 +631,7 @@ func _is_node_reserved_for_car(node: TrafficNodeType, car_id: int) -> bool:
 	return int(owner) == car_id
 
 
-## Releases a single reserved node and clears its occupied flag.
+## Clears reservation ownership for a node and marks it as released.
 func _release_node_reservation(node: TrafficNodeType) -> void:
 	if node == null:
 		return
@@ -371,7 +639,8 @@ func _release_node_reservation(node: TrafficNodeType) -> void:
 	node.release()
 
 
-## Calculates path distance between two landing pads using traffic-network waypoints.
+## Returns route distance between landing pads using traffic-graph path length.
+## Returns: INF when graph/path data is unavailable; otherwise total route length in pixels.
 func get_distance_between_landing_pads(pad_a: LandingPad, pad_b: LandingPad) -> float:
 	if _traffic_network == null:
 		return INF

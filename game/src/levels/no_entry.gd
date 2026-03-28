@@ -1,15 +1,20 @@
 @tool
 extends Node2D
 
+## Cached node reference for point a.
 @onready var _point_a: Node2D = $PointA
+## Cached node reference for point b.
 @onready var _point_b: Node2D = $PointB
 
+## Inspector setting for node a.
 @export var node_a: Node2D: 
 	set(v): node_a = v; queue_redraw()
+## Inspector setting for node b.
 @export var node_b: Node2D: 
 	set(v): node_b = v; queue_redraw()
 
 
+## Initializes runtime references and startup state.
 func _ready() -> void:
 	add_to_group("NoEntryLinks")
 	if node_a == null and has_node("PointA"):
@@ -17,6 +22,7 @@ func _ready() -> void:
 	if node_b == null and has_node("PointB"):
 		node_b = _point_b
 
+## Draws editor or debug visuals.
 func _draw():
 	if not Engine.is_editor_hint() or not (node_a and node_b): return
 	var p1 = node_a.global_position - global_position
