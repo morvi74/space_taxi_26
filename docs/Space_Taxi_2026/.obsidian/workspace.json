@@ -11,14 +11,10 @@
             "id": "a14ffe23dd3a0c94",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Fahrprofile"
+              "title": "Neuer Tab"
             }
           }
         ]
@@ -94,7 +90,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +99,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Rückverweise auf Fahrprofile"
+              "title": "Rückverweise"
             }
           },
           {
@@ -113,12 +108,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Ausgehende Links von Fahrprofile öffnen"
+              "title": "Ausgehende Links"
             }
           },
           {
@@ -156,13 +150,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "01_Game_Design/NPC_Cars/Fahrprofile.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Gliederung von Fahrprofile"
+              "title": "Gliederung"
             }
           }
         ]
@@ -186,13 +179,13 @@
   },
   "active": "a14ffe23dd3a0c94",
   "lastOpenFiles": [
+    "Willkommen.md",
     "03_Project_Management/Feature Plan.md",
+    "03_Project_Management",
     "01_Game_Design/NPC_Cars/Fahrprofile.md",
     "01_Game_Design/NPC_Cars",
-    "Willkommen.md",
+    "01_Game_Design",
     "attachements",
-    "03_Project_Management",
-    "02_Development",
-    "01_Game_Design"
+    "02_Development"
   ]
 }
